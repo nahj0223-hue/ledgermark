@@ -6,6 +6,7 @@
   "description": "IR demo video pipeline: scripted Playwright screen recording + ffmpeg post-production",
   "scripts": {
     "record": "node src/record.mjs",
+    "check": "node src/record.mjs",
     "produce": "node src/produce.mjs",
     "doctor": "node src/doctor.mjs"
   },

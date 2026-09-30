@@ -1,2 +1,6 @@
 node_modules/
 out/
+
+# Saved sign-in state holds live session cookies and tokens for the demo account.
+.auth/
+**/.auth/

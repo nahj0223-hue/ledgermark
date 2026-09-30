@@ -5,27 +5,58 @@
  * can be re-shot on its own — during IR prep the demo script changes far more often than
  * the app does.
  */
-import { mkdir, rm, rename, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { mkdir, rm, rename, writeFile, access } from 'node:fs/promises';
+import { join, resolve, dirname } from 'node:path';
 import { chromium } from 'playwright-core';
 import { chromiumPath } from './lib/env.mjs';
 import { loadScenario } from './lib/scenario.mjs';
+import { redactInitScript } from './lib/redact.mjs';
 import { CURSOR_INIT_SCRIPT, glideTo, glideToSelector, ripple } from './lib/pointer.mjs';
+
+const BOOLEAN_FLAGS = new Set(['check', 'refresh-auth']);
 
 function parseArgs(argv) {
   const [scenarioPath, ...rest] = argv;
   if (!scenarioPath) {
-    throw new Error('Usage: node src/record.mjs <scenario.json> [--out <dir>] [--only <sceneId>]');
+    throw new Error(
+      'Usage: node src/record.mjs <scenario.json> [--out <dir>] [--only <sceneId>] [--check] [--refresh-auth]',
+    );
   }
   const flags = {};
-  for (let i = 0; i < rest.length; i += 2) {
-    if (!rest[i]?.startsWith('--')) throw new Error(`Unexpected argument "${rest[i]}"`);
-    flags[rest[i].slice(2)] = rest[i + 1];
+  for (let i = 0; i < rest.length; i += 1) {
+    const token = rest[i];
+    if (!token.startsWith('--')) throw new Error(`Unexpected argument "${token}"`);
+    const name = token.slice(2);
+    if (BOOLEAN_FLAGS.has(name)) {
+      flags[name] = true;
+    } else {
+      flags[name] = rest[i + 1];
+      i += 1;
+    }
   }
-  return { scenarioPath: resolve(scenarioPath), out: resolve(flags.out ?? 'out'), only: flags.only };
+  return {
+    scenarioPath: resolve(scenarioPath),
+    out: resolve(flags.out ?? 'out'),
+    only: flags.only,
+    check: Boolean(flags.check),
+    refreshAuth: Boolean(flags['refresh-auth']),
+  };
 }
 
+const exists = (path) => access(path).then(() => true, () => false);
+
 async function runStep(page, step, scene, sceneStartedAt) {
+  try {
+    return await dispatchStep(page, step, scene, sceneStartedAt);
+  } catch (error) {
+    const target = step.selector ?? step.url ?? '';
+    throw new Error(
+      `${step.do}${target ? ` "${target}"` : ''} — ${error.message.split('\n')[0]}`,
+    );
+  }
+}
+
+async function dispatchStep(page, step, scene, sceneStartedAt) {
   const at = () => (Date.now() - sceneStartedAt) / 1000;
 
   switch (step.do) {
@@ -35,7 +66,9 @@ async function runStep(page, step, scene, sceneStartedAt) {
       break;
     }
     case 'wait':
-      if (step.selector) await page.waitForSelector(step.selector, { timeout: step.timeoutMs ?? 30_000 });
+      if (step.selector) {
+        await page.waitForSelector(step.selector, ...(step.timeoutMs ? [{ timeout: step.timeoutMs }] : []));
+      }
       if (step.ms) await page.waitForTimeout(step.ms);
       break;
     case 'settle':
@@ -106,13 +139,50 @@ async function runStep(page, step, scene, sceneStartedAt) {
   return null;
 }
 
+/** In --check mode every wait is cut to the minimum: this is a dry run, not a take. */
+const hurry = (step, check) => (check ? { ...step, ms: step.do === 'wait' ? step.ms : 0, typeDelayMs: 0 } : step);
+
+/**
+ * Sign in once and reuse the cookies for every scene. Repeating a login inside each
+ * scene's `setup` works, but it re-types credentials on every take and puts the
+ * password on screen in footage that is only trimmed afterwards.
+ */
+async function ensureAuthState(browser, scenario, { refreshAuth, check }) {
+  if (!scenario.auth) return undefined;
+  const statePath = resolve(scenario.dir, scenario.auth.statePath);
+
+  if (!refreshAuth && (await exists(statePath))) {
+    console.log(`auth   reusing ${scenario.auth.statePath}`);
+    return statePath;
+  }
+
+  const context = await browser.newContext({ viewport: scenario.viewport });
+  context.setDefaultTimeout(check ? 5_000 : 30_000);
+  const page = await context.newPage();
+  try {
+    for (const step of scenario.auth.steps) {
+      await runStep(page, hurry(step, check), { baseUrl: scenario.baseUrl }, Date.now());
+    }
+  } catch (error) {
+    await context.close();
+    throw new Error(`Sign-in failed: ${error.message}`);
+  }
+  await mkdir(dirname(statePath), { recursive: true });
+  await context.storageState({ path: statePath });
+  await context.close();
+  console.log(`auth   signed in -> ${scenario.auth.statePath}`);
+  return statePath;
+}
+
 async function main() {
-  const { scenarioPath, out, only } = parseArgs(process.argv.slice(2));
+  const { scenarioPath, out, only, check, refreshAuth } = parseArgs(process.argv.slice(2));
   const scenario = await loadScenario(scenarioPath);
 
   const videoDir = join(out, 'scenes');
-  await rm(out, { recursive: true, force: true });
-  await mkdir(videoDir, { recursive: true });
+  if (!check) {
+    await rm(out, { recursive: true, force: true });
+    await mkdir(videoDir, { recursive: true });
+  }
 
   const scenes = scenario.scenes.filter((s) => !only || s.id === only);
   if (!scenes.length) throw new Error(`No scene matched --only ${only}`);
@@ -122,22 +192,28 @@ async function main() {
     args: ['--force-color-profile=srgb', '--hide-scrollbars', '--disable-lcd-text'],
   });
 
+  const storageState = await ensureAuthState(browser, scenario, { refreshAuth, check });
   const manifest = { name: scenario.name, fps: scenario.fps, viewport: scenario.viewport, theme: scenario.theme, scenes: [] };
+  const failures = [];
 
   for (const scene of scenes) {
     if (scene.card) {
       manifest.scenes.push({ id: scene.id, kind: 'card', card: scene.card, seconds: scene.seconds ?? 3.4 });
-      console.log(`card   ${scene.id}`);
+      if (!check) console.log(`card   ${scene.id}`);
       continue;
     }
 
     const context = await browser.newContext({
       viewport: scenario.viewport,
       deviceScaleFactor: 1,
-      recordVideo: { dir: videoDir, size: scenario.viewport },
+      ...(storageState ? { storageState } : {}),
+      ...(check ? {} : { recordVideo: { dir: videoDir, size: scenario.viewport } }),
       ...(scenario.contextOptions ?? {}),
     });
     await context.addInitScript(CURSOR_INIT_SCRIPT);
+    if (scenario.redact.length) await context.addInitScript(redactInitScript(scenario.redact));
+
+    context.setDefaultTimeout(check ? 5_000 : 30_000);
 
     const page = await context.newPage();
     const captions = [];
@@ -146,30 +222,42 @@ async function main() {
     await glideTo(page, scenario.viewport.width * 0.5, scenario.viewport.height * 0.92, { steps: 1, stepDelayMs: 0 });
 
     let startedAt = openedAt;
+    let failed = null;
     try {
       // `setup` drives the app into the state this scene starts from — signing in, or
       // replaying an earlier scene's flow. Each scene records into its own context, so
       // state never carries over on its own. The footage is still captured (Playwright
       // cannot pause a recording), so measure it and let produce trim it off.
       for (const step of scene.setup ?? []) {
-        await runStep(page, { ...step, ms: step.ms ?? 0 }, { ...scene, baseUrl: scenario.baseUrl }, openedAt);
+        await runStep(page, hurry({ ...step, ms: step.ms ?? 0 }, check), { ...scene, baseUrl: scenario.baseUrl }, openedAt);
       }
       startedAt = Date.now();
 
       for (const step of scene.steps) {
-        const caption = await runStep(page, { ...step }, { ...scene, baseUrl: scenario.baseUrl }, startedAt);
+        const caption = await runStep(page, hurry({ ...step }, check), { ...scene, baseUrl: scenario.baseUrl }, startedAt);
         if (caption) captions.push(caption);
       }
     } catch (error) {
-      await context.close();
-      await browser.close();
-      throw new Error(`Scene "${scene.id}" failed: ${error.message}`);
+      failed = error.message.split('\n')[0];
+      // A dry run reports every broken scene at once; a real take stops at the first,
+      // because everything after it would be filmed against the wrong state anyway.
+      if (!check) {
+        await context.close();
+        await browser.close();
+        throw new Error(`Scene "${scene.id}" failed: ${failed}`);
+      }
+      failures.push({ scene: scene.id, reason: failed });
     }
 
     const seconds = (Date.now() - startedAt) / 1000;
     const trimStart = (startedAt - openedAt) / 1000;
-    const rawPath = await page.video().path();
+    const rawPath = check ? null : await page.video().path();
     await context.close();
+
+    if (check) {
+      console.log(failed ? `FAIL   ${scene.id}  ${failed}` : `ok     ${scene.id}`);
+      continue;
+    }
 
     const target = join(videoDir, `${scene.id}.webm`);
     await rename(rawPath, target);
@@ -181,6 +269,16 @@ async function main() {
   }
 
   await browser.close();
+
+  if (check) {
+    console.log(
+      failures.length
+        ? `\n${failures.length} scene(s) failed — fix the selectors above, then re-run --check.`
+        : '\nAll scenes pass. Re-run without --check to record.',
+    );
+    process.exit(failures.length ? 1 : 0);
+  }
+
   await writeFile(join(out, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
   console.log(`\nmanifest -> ${join(out, 'manifest.json')}`);
 }

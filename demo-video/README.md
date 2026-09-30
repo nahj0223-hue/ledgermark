@@ -47,6 +47,61 @@ npm run produce -- out/take-1
 
 스텝: `goto` `wait` `settle` `hover` `click` `fill` `press` `scroll` `highlight` `caption`.
 
+### 촬영 전 셀렉터 점검
+
+```bash
+npm run check -- scenarios/signup-to-trace.json --check
+```
+
+앱을 실제로 구동한 상태에서 시나리오를 빠르게 훑고, 깨진 셀렉터를 **전부 한 번에**
+보고한다. 실패는 어느 스텝의 어느 셀렉터인지까지 찍어준다.
+
+```
+FAIL   10-signup  fill "#does-not-exist" — locator.scrollIntoViewIfNeeded: Timeout 5000ms exceeded.
+ok     20-register
+FAIL   30-trace   wait "#also-missing" — page.waitForSelector: Timeout 5000ms exceeded.
+```
+
+셀렉터를 고치고 통과할 때까지 반복한 뒤 녹화하면, 촬영 도중 실패로 날리는 시간이 없다.
+
+### 로그인이 필요한 앱
+
+```json
+"auth": {
+  "statePath": ".auth/state.json",
+  "steps": [
+    { "do": "goto", "url": "/login" },
+    { "do": "fill", "selector": "#email", "value": "demo@example.test" },
+    { "do": "fill", "selector": "#password", "value": "..." },
+    { "do": "click", "selector": "button[type=submit]" },
+    { "do": "wait", "selector": ".dashboard" }
+  ]
+}
+```
+
+로그인은 **한 번만** 수행하고 세션을 저장해 모든 장면이 재사용한다. 장면마다 `setup`에
+로그인을 넣어도 되지만, 그러면 매 테이크마다 비밀번호를 다시 타이핑하고 그 화면이
+영상에 담겼다가 나중에 잘려나간다. 세션을 새로 받으려면 `--refresh-auth`.
+
+`.auth/`는 `.gitignore`에 들어 있다. 세션 쿠키가 들어 있으므로 커밋하지 말 것.
+
+### 화면의 실제 데이터 가리기
+
+IR 영상은 투자자에게 메일로 전달되므로, 실제 거래처명·사업자번호·금액이 그대로 담기면
+안 된다. 시나리오 최상위 `redact`는 화면 전환·리렌더와 무관하게 계속 적용된다.
+
+```json
+"redact": [
+  { "selector": ".biz-no",  "mode": "blur" },
+  { "selector": ".partner", "mode": "replace", "value": "○○상사" },
+  { "selector": ".amount",  "mode": "block" }
+]
+```
+
+세 모드 모두 레이아웃을 유지한다. 가린 뒤 화면이 재배치되면 제품의 실제 모습이 아니게
+된다. `block`은 글자 색 그대로의 검은 막대를 남기므로, 데이터가 **누락된 것이 아니라
+가려진 것**임이 보는 사람에게 드러난다.
+
 시나리오는 녹화 시작 전에 전부 검증한다 — 6장면짜리 대본의 오타가 앱을 다 띄운 뒤
 몇 분 지나서야 드러나는 것을 막기 위해서다.
 
