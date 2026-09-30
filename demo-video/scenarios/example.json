@@ -1,0 +1,49 @@
+{
+  "name": "ledgermark-ir-demo",
+  "baseUrl": "http://127.0.0.1:4173",
+  "fps": 30,
+  "viewport": { "width": 1920, "height": 1080 },
+  "scenes": [
+    {
+      "id": "00-title",
+      "card": {
+        "eyebrow": "LedgerMark · Investor Demo",
+        "headline": "원장에 남는 신뢰, 검증 가능한 거래 증적",
+        "sub": "수출입 거래의 모든 단계를 변조 불가능한 원장으로 고정합니다."
+      },
+      "seconds": 3.6
+    },
+    {
+      "id": "10-dashboard",
+      "steps": [
+        { "do": "goto", "url": "/" },
+        { "do": "wait", "selector": "#title" },
+        { "do": "caption", "text": "거래 원장 대시보드", "sub": "등록·검증·대기 건수를 단일 화면에서 확인", "ms": 3400 },
+        { "do": "settle", "ms": 1000 },
+        { "do": "highlight", "selector": "#kpi-2", "ms": 2200 },
+        { "do": "hover", "selector": "#kpi-4", "ms": 700 }
+      ]
+    },
+    {
+      "id": "20-query",
+      "steps": [
+        { "do": "goto", "url": "/" },
+        { "do": "wait", "selector": "#q" },
+        { "do": "caption", "text": "HS코드 기준 거래 조회", "sub": "품목번호로 해당 거래의 검증 상태를 즉시 추적", "ms": 3600 },
+        { "do": "fill", "selector": "#q", "value": "8703.23", "typeDelayMs": 90 },
+        { "do": "click", "selector": "#go" },
+        { "do": "settle", "ms": 1200 },
+        { "do": "scroll", "to": 320, "ms": 1200 }
+      ]
+    },
+    {
+      "id": "99-closing",
+      "card": {
+        "eyebrow": "Next",
+        "headline": "검증 가능한 무역 데이터 인프라",
+        "sub": "파일럿 도입 및 투자 논의를 환영합니다."
+      },
+      "seconds": 3.4
+    }
+  ]
+}
