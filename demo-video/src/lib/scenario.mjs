@@ -32,8 +32,11 @@ export async function loadScenario(path) {
       errors.push(`${where} needs either a \`card\` or a non-empty \`steps\` array`);
     }
 
-    for (const [j, step] of (scene.steps ?? []).entries()) {
-      const stepWhere = `${where}.steps[${j}]`;
+    const allSteps = [
+      ...(scene.setup ?? []).map((step, j) => [`${where}.setup[${j}]`, step]),
+      ...(scene.steps ?? []).map((step, j) => [`${where}.steps[${j}]`, step]),
+    ];
+    for (const [stepWhere, step] of allSteps) {
       if (!STEP_KINDS.has(step.do)) {
         errors.push(`${stepWhere}.do "${step.do}" is not one of: ${[...STEP_KINDS].join(', ')}`);
       }
@@ -45,6 +48,9 @@ export async function loadScenario(path) {
       if (step.do === 'wait' && !step.selector && !step.ms) {
         errors.push(`${stepWhere} needs a \`selector\` or \`ms\``);
       }
+    }
+    if (scene.setup?.some((step) => step.do === 'caption')) {
+      errors.push(`${where}.setup must not contain captions — setup footage is trimmed off`);
     }
   }
 

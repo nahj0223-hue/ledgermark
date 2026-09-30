@@ -71,7 +71,9 @@ async function buildCardSegment(scene, pngPath, fps, out) {
 }
 
 async function buildScreenSegment(scene, captionPngs, fps, takeDir, out) {
-  const inputs = ['-i', join(takeDir, scene.file)];
+  // Seek past the setup footage so the cut opens on the first narrative beat.
+  const trim = scene.trimStart ?? 0;
+  const inputs = [...(trim > 0.02 ? ['-ss', trim.toFixed(3)] : []), '-i', join(takeDir, scene.file)];
   const filters = [`[0:v]fps=${fps},format=rgba[base0]`];
 
   scene.captions.forEach((caption, i) => {

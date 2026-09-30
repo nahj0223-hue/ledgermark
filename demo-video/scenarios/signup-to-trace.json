@@ -1,0 +1,246 @@
+{
+  "name": "ledgermark-signup-to-trace",
+  "baseUrl": "http://127.0.0.1:4173",
+  "fps": 30,
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "scenes": [
+    {
+      "id": "00-title",
+      "card": {
+        "eyebrow": "샘플 구성안 · 실제 제품 화면 아님",
+        "headline": "등록한 순간부터, 추적 가능한 거래",
+        "sub": "사용자 등록 → 원장 기록 → 전 구간 추적까지 한 번에 보여주는 3단 구성."
+      },
+      "seconds": 3.8
+    },
+    {
+      "id": "10-signup",
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/"
+        },
+        {
+          "do": "wait",
+          "selector": "#email"
+        },
+        {
+          "do": "caption",
+          "text": "1. 사용자 등록",
+          "sub": "사업자 정보를 확인한 뒤 원장 접근 권한을 발급",
+          "ms": 3600
+        },
+        {
+          "do": "fill",
+          "selector": "#email",
+          "value": "trade@conialab.co.kr",
+          "typeDelayMs": 55
+        },
+        {
+          "do": "fill",
+          "selector": "#biz",
+          "value": "220-88-01234",
+          "typeDelayMs": 65
+        },
+        {
+          "do": "fill",
+          "selector": "#corp",
+          "value": "주식회사 코니아랩",
+          "typeDelayMs": 75
+        },
+        {
+          "do": "click",
+          "selector": "#signup",
+          "ms": 1100
+        }
+      ]
+    },
+    {
+      "id": "20-register",
+      "steps": [
+        {
+          "do": "wait",
+          "selector": "#hs"
+        },
+        {
+          "do": "caption",
+          "text": "2. 거래를 원장에 등록",
+          "sub": "등록 시점에 해시가 생성되고 이후 소급 수정이 막힙니다",
+          "ms": 3800
+        },
+        {
+          "do": "fill",
+          "selector": "#hs",
+          "value": "8703.23",
+          "typeDelayMs": 80
+        },
+        {
+          "do": "fill",
+          "selector": "#dest",
+          "value": "카자흐스탄",
+          "typeDelayMs": 80
+        },
+        {
+          "do": "fill",
+          "selector": "#qty",
+          "value": "24",
+          "typeDelayMs": 90
+        },
+        {
+          "do": "click",
+          "selector": "#commit",
+          "ms": 900
+        },
+        {
+          "do": "highlight",
+          "selector": "#receipt",
+          "ms": 2600
+        }
+      ],
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/"
+        },
+        {
+          "do": "wait",
+          "selector": "#email"
+        },
+        {
+          "do": "fill",
+          "selector": "#email",
+          "value": "trade@conialab.co.kr",
+          "typeDelayMs": 0
+        },
+        {
+          "do": "fill",
+          "selector": "#biz",
+          "value": "220-88-01234",
+          "typeDelayMs": 0
+        },
+        {
+          "do": "fill",
+          "selector": "#corp",
+          "value": "주식회사 코니아랩",
+          "typeDelayMs": 0
+        },
+        {
+          "do": "click",
+          "selector": "#signup",
+          "ms": 200
+        }
+      ]
+    },
+    {
+      "id": "30-trace",
+      "steps": [
+        {
+          "do": "click",
+          "selector": "#to-track",
+          "ms": 800
+        },
+        {
+          "do": "wait",
+          "selector": "#go"
+        },
+        {
+          "do": "caption",
+          "text": "3. 등록한 거래를 추적",
+          "sub": "거래번호 하나로 등록·기록·통관 연계·검증까지 되짚습니다",
+          "ms": 4000
+        },
+        {
+          "do": "click",
+          "selector": "#go",
+          "ms": 1200
+        },
+        {
+          "do": "highlight",
+          "selector": "#tl",
+          "ms": 3000
+        },
+        {
+          "do": "scroll",
+          "to": 260,
+          "ms": 1100
+        },
+        {
+          "do": "settle",
+          "ms": 900
+        }
+      ],
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/"
+        },
+        {
+          "do": "wait",
+          "selector": "#email"
+        },
+        {
+          "do": "fill",
+          "selector": "#email",
+          "value": "trade@conialab.co.kr",
+          "typeDelayMs": 0
+        },
+        {
+          "do": "fill",
+          "selector": "#biz",
+          "value": "220-88-01234",
+          "typeDelayMs": 0
+        },
+        {
+          "do": "fill",
+          "selector": "#corp",
+          "value": "주식회사 코니아랩",
+          "typeDelayMs": 0
+        },
+        {
+          "do": "click",
+          "selector": "#signup",
+          "ms": 200
+        },
+        {
+          "do": "wait",
+          "selector": "#hs"
+        },
+        {
+          "do": "fill",
+          "selector": "#hs",
+          "value": "8703.23",
+          "typeDelayMs": 0
+        },
+        {
+          "do": "fill",
+          "selector": "#dest",
+          "value": "카자흐스탄",
+          "typeDelayMs": 0
+        },
+        {
+          "do": "fill",
+          "selector": "#qty",
+          "value": "24",
+          "typeDelayMs": 0
+        },
+        {
+          "do": "click",
+          "selector": "#commit",
+          "ms": 200
+        }
+      ]
+    },
+    {
+      "id": "99-closing",
+      "card": {
+        "eyebrow": "Next",
+        "headline": "검증 가능한 무역 데이터 인프라",
+        "sub": "파일럿 도입 및 투자 논의를 환영합니다."
+      },
+      "seconds": 3.4
+    }
+  ]
+}

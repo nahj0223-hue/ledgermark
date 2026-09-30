@@ -141,11 +141,21 @@ async function main() {
 
     const page = await context.newPage();
     const captions = [];
-    const startedAt = Date.now();
+    const openedAt = Date.now();
     // Park the cursor off to the side so the first glide reads as a deliberate move.
     await glideTo(page, scenario.viewport.width * 0.5, scenario.viewport.height * 0.92, { steps: 1, stepDelayMs: 0 });
 
+    let startedAt = openedAt;
     try {
+      // `setup` drives the app into the state this scene starts from — signing in, or
+      // replaying an earlier scene's flow. Each scene records into its own context, so
+      // state never carries over on its own. The footage is still captured (Playwright
+      // cannot pause a recording), so measure it and let produce trim it off.
+      for (const step of scene.setup ?? []) {
+        await runStep(page, { ...step, ms: step.ms ?? 0 }, { ...scene, baseUrl: scenario.baseUrl }, openedAt);
+      }
+      startedAt = Date.now();
+
       for (const step of scene.steps) {
         const caption = await runStep(page, { ...step }, { ...scene, baseUrl: scenario.baseUrl }, startedAt);
         if (caption) captions.push(caption);
@@ -157,13 +167,17 @@ async function main() {
     }
 
     const seconds = (Date.now() - startedAt) / 1000;
+    const trimStart = (startedAt - openedAt) / 1000;
     const rawPath = await page.video().path();
     await context.close();
 
     const target = join(videoDir, `${scene.id}.webm`);
     await rename(rawPath, target);
-    manifest.scenes.push({ id: scene.id, kind: 'screen', file: `scenes/${scene.id}.webm`, seconds, captions });
-    console.log(`scene  ${scene.id}  ${seconds.toFixed(1)}s  ${captions.length} caption(s)`);
+    manifest.scenes.push({ id: scene.id, kind: 'screen', file: `scenes/${scene.id}.webm`, seconds, trimStart, captions });
+    console.log(
+      `scene  ${scene.id}  ${seconds.toFixed(1)}s  ${captions.length} caption(s)` +
+        (trimStart > 0.05 ? `  (+${trimStart.toFixed(1)}s setup trimmed)` : ''),
+    );
   }
 
   await browser.close();
