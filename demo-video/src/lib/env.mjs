@@ -27,17 +27,19 @@ function findBuild(prefix, ...relativeCandidates) {
   return null;
 }
 
+/**
+ * Returns undefined when no pre-installed build is found, which is the right answer on a
+ * developer machine: passing `executablePath: undefined` lets Playwright fall back to the
+ * browser it installed itself. Only the cloud container pins an explicit path, because
+ * there the build lives outside the package and its number moves on its own.
+ */
 export function chromiumPath() {
-  const resolved =
+  return (
     process.env.LEDGERMARK_CHROMIUM ||
     findBuild('chromium-', 'chrome-linux/chrome') ||
-    findBuild('chromium_headless_shell-', 'chrome-linux/headless_shell');
-  if (!resolved) {
-    throw new Error(
-      `Chromium not found under ${BROWSERS_ROOT}. Set LEDGERMARK_CHROMIUM to an executable.`,
-    );
-  }
-  return resolved;
+    findBuild('chromium_headless_shell-', 'chrome-linux/headless_shell') ||
+    undefined
+  );
 }
 
 /**

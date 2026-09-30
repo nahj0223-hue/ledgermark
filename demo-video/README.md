@@ -15,6 +15,7 @@ AI로 생성한 컨셉 영상이 아니라 살아 있는 앱을 조작한 화면
 
 ```bash
 npm install
+npx playwright install chromium   # 클라우드 컨테이너 외 환경에서만 필요
 npm run doctor
 npm run record  -- scenarios/example.json --out out/take-1
 npm run produce -- out/take-1
@@ -60,6 +61,14 @@ npm run produce -- out/take-1
   fontconfig 의존을 없앴다.
 - **ffmpeg는 `ffmpeg-static`을 쓴다.** Playwright 번들 ffmpeg에는 VP8과 PNG뿐이라 H.264
   mp4를 만들 수 없다.
+
+## PC(Windows·macOS)에서 돌릴 때
+
+Chromium은 클라우드 컨테이너에만 미리 깔려 있으므로 `npx playwright install chromium`을
+한 번 실행한다. ffmpeg는 `ffmpeg-static`이 OS별 바이너리를 같이 받으므로 별도 설치가 없다.
+`npm run doctor`가 전부 PASS면 준비된 것이다.
+
+앱을 먼저 띄운 뒤(예: `npm run dev`), 시나리오의 `baseUrl`을 그 주소로 맞추고 녹화한다.
 
 ## 아직 남은 것
 

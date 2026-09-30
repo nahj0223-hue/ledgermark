@@ -11,7 +11,7 @@ function record(name, fn) {
   }
 }
 
-record('chromium binary', () => chromiumPath());
+record('chromium binary', () => chromiumPath() ?? "none pinned - using Playwright's own install");
 record('ffmpeg binary', () => ffmpegPath());
 record('ffmpeg runs', () =>
   execFileSync(ffmpegPath(), ['-version'], { encoding: 'utf8' }).split('\n')[0],
@@ -22,9 +22,17 @@ record('libx264 encoder', () => {
   return 'available';
 });
 
-const browser = await chromium.launch({ executablePath: chromiumPath() });
-checks.push({ name: 'chromium launches', ok: true, detail: browser.version() });
-await browser.close();
+try {
+  const browser = await chromium.launch({ executablePath: chromiumPath() });
+  checks.push({ name: 'chromium launches', ok: true, detail: browser.version() });
+  await browser.close();
+} catch (error) {
+  checks.push({
+    name: 'chromium launches',
+    ok: false,
+    detail: `${error.message.split('\n')[0]} - run: npx playwright install chromium`,
+  });
+}
 
 for (const { name, ok, detail } of checks) {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name.padEnd(20)} ${detail}`);
