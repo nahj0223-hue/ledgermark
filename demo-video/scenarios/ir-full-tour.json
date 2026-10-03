@@ -220,7 +220,7 @@
       "steps": [
         {
           "do": "caption",
-          "text": "2. 유통 이력 추적",
+          "text": "1. 유통 이력 추적",
           "ms": 4200,
           "sub": "생산 → 수출 → 통관 → 소매 → 교환 → 재판매"
         },
@@ -276,7 +276,7 @@
       "steps": [
         {
           "do": "caption",
-          "text": "3. 동의와 보상",
+          "text": "2. 동의와 보상",
           "ms": 4200,
           "sub": "동의·철회 자체가 원장에 기록되어 사후 증명이 가능합니다"
         },
@@ -309,6 +309,124 @@
           "text": "포인트 적립은 중복 방지 키로 1회만",
           "ms": 4600,
           "sub": "PointLedgerEntry.dedupeKey 유니크 제약 — 중복 적립이 DB 단계에서 차단됩니다"
+        },
+        {
+          "do": "settle",
+          "ms": 900
+        }
+      ]
+    },
+    {
+      "id": "22-consumer-survey",
+      "as": "consumer",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/app"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#survey-panel",
+            "section:has-text(\"설문\")",
+            "body"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "3. 설문 — 동의한 소비자에게만 열린다",
+          "sub": "응답 내용이 아니라 '응답했다는 사실'이 원장에 남아 1인 1회가 보장됩니다",
+          "ms": 4600
+        },
+        {
+          "do": "scroll",
+          "to": 1980,
+          "ms": 1700
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#survey-panel",
+            "section:has-text(\"설문\")"
+          ],
+          "ms": 3200,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "참여 조건이 원장에서 나온다",
+          "sub": "'교환 이력 필요' 같은 조건을 설문 서버가 아니라 UID 이력이 판정합니다",
+          "ms": 4800
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"설문 시작\")",
+            "#survey-start"
+          ],
+          "ms": 1400,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 900
+        }
+      ]
+    },
+    {
+      "id": "24-consumer-reward",
+      "as": "consumer",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/app"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#reward-panel",
+            "section:has-text(\"리워드\")",
+            "body"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "4. 리워드 — 포인트 차감과 발급이 한 트랜잭션",
+          "sub": "둘이 분리되면 차감만 되고 리워드가 안 나오는 구간이 생깁니다",
+          "ms": 4600
+        },
+        {
+          "do": "scroll",
+          "to": 2700,
+          "ms": 1800
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#reward-panel",
+            "section:has-text(\"리워드\")"
+          ],
+          "ms": 3200,
+          "optional": true
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"교환하기\")",
+            "#reward-redeem"
+          ],
+          "ms": 1500,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "적립도 차감도 중복이 불가능하다",
+          "sub": "PointLedgerEntry.dedupeKey 유니크 제약 — 재시도·중복 요청이 DB 단계에서 막힙니다",
+          "ms": 4800
         },
         {
           "do": "settle",
@@ -451,7 +569,7 @@
       "steps": [
         {
           "do": "caption",
-          "text": "4. 불량 교환 — 예약과 수령의 2단계",
+          "text": "5. 불량 교환 — 예약과 수령의 2단계",
           "ms": 4600,
           "sub": "예약이 재고를 선점하고, 수령이 교환권을 소멸시킵니다"
         },
@@ -519,7 +637,7 @@
         },
         {
           "do": "caption",
-          "text": "5. 무인 판매기도 같은 원장",
+          "text": "6. 무인 판매기도 같은 원장",
           "ms": 4600,
           "sub": "유인·무인 경로가 갈라지면 추적이 끊깁니다 — KioskSale 도 동일 원장에 씁니다"
         },
@@ -644,7 +762,7 @@
       "steps": [
         {
           "do": "caption",
-          "text": "6. 미통관 UID 는 경보가 된다",
+          "text": "7. 미통관 UID 는 경보가 된다",
           "ms": 4800,
           "sub": "통관 기록 없이 소매 단계에서 관측되면 SmuggleAlert 가 자동 생성됩니다"
         },
@@ -701,7 +819,7 @@
         },
         {
           "do": "caption",
-          "text": "7. 세율은 통관 시점으로 고정된다",
+          "text": "8. 세율은 통관 시점으로 고정된다",
           "ms": 5000,
           "sub": "clearedAt 이전 최신 세율표를 적용 — 사후 세율 변경이 과거 배치를 흔들지 않습니다"
         },
@@ -768,7 +886,7 @@
         },
         {
           "do": "caption",
-          "text": "8. 6단계 상태가 하나의 깔때기로 보인다",
+          "text": "9. 6단계 상태가 하나의 깔때기로 보인다",
           "ms": 4800,
           "sub": "MINTED → EXPORTED → WHOLESALE → RETAIL_SOLD → EXCHANGED → RESOLD"
         },
@@ -793,6 +911,201 @@
       ]
     },
     {
+      "id": "72-console-production",
+      "as": "admin",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/console"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#module-production",
+            "[data-module=\"production\"]",
+            "nav button:has-text(\"생산\")"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "10. 생산 — 원장의 1번 기록이 여기서 생긴다",
+          "sub": "Lot 을 발행하면 수량만큼의 UID 와 원장 기록이 같은 트랜잭션에서 만들어집니다",
+          "ms": 4600
+        },
+        {
+          "do": "click",
+          "selector": [
+            "#module-production",
+            "[data-module=\"production\"]",
+            "nav button:has-text(\"생산\")"
+          ],
+          "ms": 1800
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#production-mint",
+            "section:has-text(\"발행\")"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "부분 성공이 없다는 것이 핵심",
+          "sub": "2,400개 중 2,399개만 발행되는 상태가 존재하면 추적 근거가 그 자리에서 무너집니다",
+          "ms": 5000
+        },
+        {
+          "do": "scroll",
+          "to": 400,
+          "ms": 1500
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#production-lots",
+            "table"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 900
+        }
+      ]
+    },
+    {
+      "id": "73-console-customs-admin",
+      "as": "admin",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/console"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#module-customs",
+            "[data-module=\"customs\"]",
+            "nav button:has-text(\"통관\")"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "11. 통관 관리 — 세율은 덮어쓰지 않고 쌓인다",
+          "sub": "적용 시작일과 함께 누적되며, 배치는 통관 시점에 유효했던 세율로 고정됩니다",
+          "ms": 4600
+        },
+        {
+          "do": "click",
+          "selector": [
+            "#module-customs",
+            "[data-module=\"customs\"]",
+            "nav button:has-text(\"통관\")"
+          ],
+          "ms": 1800
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#tariff-table",
+            "table"
+          ],
+          "ms": 3400,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "7월 세율을 지금 넣어도 3월 배치는 안 흔들린다",
+          "sub": "과거 납부 세액이 소급 변동하지 않는 구조 — 관세청이 대조할 수 있는 전제입니다",
+          "ms": 5000
+        },
+        {
+          "do": "scroll",
+          "to": 360,
+          "ms": 1500
+        },
+        {
+          "do": "settle",
+          "ms": 1000
+        }
+      ]
+    },
+    {
+      "id": "74-console-exchanges",
+      "as": "admin",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/console"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#module-exchanges",
+            "[data-module=\"exchanges\"]",
+            "nav button:has-text(\"교환\")"
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "12. 교환 정산 — 예약은 재고를, 수령은 비용을 묶는다",
+          "sub": "가맹점의 교환 예약이 본사 재고를 선점하고, 수령 시점에 정산이 확정됩니다",
+          "ms": 4600
+        },
+        {
+          "do": "click",
+          "selector": [
+            "#module-exchanges",
+            "[data-module=\"exchanges\"]",
+            "nav button:has-text(\"교환\")"
+          ],
+          "ms": 1800
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#exchange-kpis",
+            "[data-testid=\"kpis\"]"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "재교환 시도 0건은 운영 성과가 아니라 구조다",
+          "sub": "수령 시 voucherState 가 NONE 이 되므로 두 번째 교환은 정산에 올라올 수 없습니다",
+          "ms": 5000
+        },
+        {
+          "do": "scroll",
+          "to": 420,
+          "ms": 1500
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#exchange-settlement",
+            "table"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 900
+        }
+      ]
+    },
+    {
       "id": "75-console-ledger",
       "as": "admin",
       "setup": [
@@ -812,7 +1125,7 @@
       "steps": [
         {
           "do": "caption",
-          "text": "9. 원장 무결성 검증",
+          "text": "13. 원장 무결성 검증",
           "ms": 4400,
           "sub": "전체 기록을 재해시하여 체인 연속성을 전수 확인합니다"
         },
@@ -836,7 +1149,7 @@
         },
         {
           "do": "caption",
-          "text": "10. 머클 루트를 퍼블릭 체인에 고정",
+          "text": "14. 머클 루트를 퍼블릭 체인에 고정",
           "ms": 4800,
           "sub": "고정 이후에는 운영자도 과거 기록을 바꿀 수 없습니다"
         },
@@ -886,7 +1199,7 @@
       "steps": [
         {
           "do": "caption",
-          "text": "11. 감사 로그 — 27종 행위",
+          "text": "15. 감사 로그 — 27종 행위",
           "ms": 4600,
           "sub": "행위자·대상·시각이 함께 보존되며 삭제 경로는 없습니다"
         },
@@ -943,7 +1256,7 @@
         },
         {
           "do": "caption",
-          "text": "12. 현장 앱은 이미 배포 가능",
+          "text": "16. 현장 앱은 이미 배포 가능",
           "ms": 4600,
           "sub": "단속 요원용 Android 앱이 서버와 동일한 원장 API 를 사용합니다"
         },

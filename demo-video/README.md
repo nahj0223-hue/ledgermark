@@ -202,7 +202,7 @@ Chromium은 클라우드 컨테이너에만 미리 깔려 있으므로 `npx play
 | 파일 | 길이 | 용도 |
 |---|---|---|
 | `scenarios/signup-to-trace.json` | 약 40초 | 등록 → 원장 기록 → 추적, 3단 요약본 |
-| `scenarios/ir-full-tour.json` | 3분 10초 | 6개 역할 전수 투어 (스토리보드: `storyboard/ir-full-tour.md`) |
+| `scenarios/ir-full-tour.json` | 4분 00초 | 6개 역할 · 27장면 전수 투어 (스토리보드: `storyboard/ir-full-tour.md`) |
 
 ## 아직 남은 것
 

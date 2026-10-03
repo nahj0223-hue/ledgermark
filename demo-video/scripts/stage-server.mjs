@@ -100,7 +100,13 @@ const MODULES = [
 
 // The real console swaps modules in place; the stage navigates instead, so the same
 // `click #module-ledger` step works against either one.
-const MODULE_HREF = { ledger: '/console/ledger', audit: '/console/audit' };
+const MODULE_HREF = {
+  ledger: '/console/ledger',
+  audit: '/console/audit',
+  production: '/console/production',
+  customs: '/console/customs-admin',
+  exchanges: '/console/exchanges',
+};
 const consoleNav = (active) =>
   `<nav>${MODULES.map(
     ([id, label]) =>
@@ -121,7 +127,21 @@ const PAGES = {
 <div id="verdict" style="margin-top:22px"><span class="pill ok">정품 확인</span> <span style="font-size:15px;color:#4b5563">${UID} · 원장 기록 6건 · 체인 고정 완료</span></div></div>
 <div class="panel" id="trace-timeline"><h2>유통 이력</h2><p class="sub">추가만 가능한 해시 체인 · 각 단계가 직전 기록의 해시를 포함합니다</p>${traceList()}</div>
 <div class="panel" id="consent-panel"><h2>데이터 제공 동의</h2><p class="sub">동의·철회 모두 원장에 기록되며, 동의 시 포인트가 적립됩니다</p>
-<div class="row"><button class="btn" id="consent-accept">동의하고 적립</button><span id="points-balance" style="font-size:22px;font-weight:700">1,250 P</span></div></div>`,
+<div class="row"><button class="btn" id="consent-accept">동의하고 적립</button><span id="points-balance" style="font-size:22px;font-weight:700">1,250 P</span></div></div>
+<div class="panel" id="survey-panel"><h2>설문 참여</h2><p class="sub">동의한 소비자에게만 노출 · 응답은 SurveyResponse 로 1인 1회 기록됩니다</p>
+<table><thead><tr><th>설문</th><th>문항</th><th>적립</th><th>상태</th></tr></thead><tbody>
+<tr><td>구매 경로 조사 2026-Q2</td><td>6</td><td>300 P</td><td><span class="pill ok">응답 완료</span></td></tr>
+<tr><td>니코틴 농도 선호도</td><td>4</td><td>200 P</td><td><span class="pill warn">참여 가능</span></td></tr>
+<tr><td>교환 경험 만족도</td><td>5</td><td>250 P</td><td><span class="pill">교환 이력 필요</span></td></tr>
+</tbody></table>
+<div class="row" style="margin-top:18px"><button class="btn" id="survey-start">설문 시작</button><span style="font-size:14px;color:#6b7280">응답 자체가 아니라 <b>응답했다는 사실</b>이 원장에 남습니다</span></div></div>
+<div class="panel" id="reward-panel"><h2>리워드 교환</h2><p class="sub">포인트 차감과 리워드 발급이 한 트랜잭션 · RewardRedemption 으로 보존</p>
+<table><thead><tr><th>리워드</th><th>필요 포인트</th><th>재고</th><th></th></tr></thead><tbody>
+<tr><td>정품 케이스</td><td>1,000 P</td><td>남음 42</td><td><span class="pill ok">교환 가능</span></td></tr>
+<tr><td>클리닝 키트</td><td>1,500 P</td><td>남음 8</td><td><span class="pill warn">포인트 부족</span></td></tr>
+<tr><td>가맹점 할인권</td><td>2,000 P</td><td>남음 120</td><td><span class="pill warn">포인트 부족</span></td></tr>
+</tbody></table>
+<div class="row" style="margin-top:18px"><button class="btn" id="reward-redeem">교환하기</button><span id="reward-balance" style="font-size:22px;font-weight:700">1,250 P</span></div></div>`,
     }),
   '/partner': () =>
     layout({
@@ -233,6 +253,57 @@ const PAGES = {
 <tr><td>2026-05-07 15:30</td><td>CONSENT_GRANT</td><td>CONSUMER #41882</td><td>ConsentRecord #9921</td><td><span class="pill ok">성공</span></td></tr>
 <tr><td>2026-05-07 14:02</td><td>LOT_MINT</td><td>ADMIN</td><td>Lot L-2605-C · 2,400 UID</td><td><span class="pill ok">성공</span></td></tr>
 </tbody></table></div>`,
+    }),
+  '/console/production': () =>
+    layout({
+      role: 'admin',
+      title: 'LedgerMark Console · 생산',
+      nav: consoleNav('production'),
+      body: `<h1>생산 · Lot 발행</h1><p class="lede">Lot 하나를 발행하면 수량만큼의 UID 와 원장 기록이 같은 트랜잭션 안에서 만들어집니다.</p>
+<div class="panel" id="production-mint"><h2>신규 Lot 발행</h2><p class="sub">mintLot() · Lot 당 최대 10,000 UID · 부분 성공은 없습니다</p>
+<div class="row"><input id="lot-name" placeholder="제품명 · 용량 · 니코틴 농도" value="ConiaMark LIQUID 30mL · 12mg/mL" style="width:520px"><input id="lot-qty" placeholder="수량" value="2,400" style="width:160px"><button class="btn" id="lot-mint">발행</button></div>
+<div style="margin-top:20px"><span class="pill ok">L-2605-C · 2,400 UID</span> <span style="font-size:14px;color:#6b7280">UID 2,400건 + 원장 2,400건이 한 트랜잭션으로 커밋됨</span></div></div>
+<div class="panel" id="production-lots"><h2>Lot 원장</h2><p class="sub">발행 시점이 모든 UID 의 1번 기록이 됩니다</p>
+<table><thead><tr><th>Lot</th><th>제품</th><th>수량</th><th>발행일</th><th>현재 단계</th></tr></thead><tbody>
+<tr><td>L-2605-C</td><td>LIQUID 30mL · 12mg/mL</td><td>2,400</td><td>2026-05-07</td><td><span class="pill">MINTED</span></td></tr>
+<tr><td>L-2604-B</td><td>DEVICE</td><td>1,200</td><td>2026-04-05</td><td><span class="pill">EXPORTED</span></td></tr>
+<tr><td>L-2603-A</td><td>LIQUID 30mL · 12mg/mL</td><td>4,800</td><td>2026-03-02</td><td><span class="pill ok">RETAIL_SOLD</span></td></tr>
+</tbody></table></div>`,
+    }),
+  '/console/customs-admin': () =>
+    layout({
+      role: 'admin',
+      title: 'LedgerMark Console · 통관 관리',
+      nav: consoleNav('customs'),
+      body: `<h1>통관 관리 · 세율표</h1><p class="lede">세율은 덮어쓰지 않고 적용 시작일과 함께 쌓입니다. 배치는 통관 시점에 유효했던 세율로 고정됩니다.</p>
+<div class="panel" id="tariff-form"><h2>세율 등록</h2><p class="sub">니코틴 농도 구간은 하한 포함, 상한 제외 · DEVICE 는 개당 정액</p>
+<div class="row"><input id="tariff-from" placeholder="적용 시작일" value="2026-07-01" style="width:200px"><input id="tariff-rate" placeholder="세율 (PHP)" value="61.00" style="width:180px"><button class="btn" id="tariff-save">등록</button></div></div>
+<div class="panel" id="tariff-table"><h2>세율 이력</h2><p class="sub">pickTariff() 는 clearedAt 이전의 가장 최근 세율을 고릅니다</p>
+<table><thead><tr><th>적용 시작</th><th>품목</th><th>니코틴 구간</th><th>세율</th><th>적용 배치</th></tr></thead><tbody>
+<tr><td>2026-07-01</td><td>LIQUID</td><td>0 – 12 mg/mL</td><td>₱61.00 / mL</td><td><span class="pill warn">예정</span></td></tr>
+<tr><td>2026-05-01</td><td>LIQUID</td><td>0 – 12 mg/mL</td><td>₱52.00 / mL</td><td>IB-2605-01</td></tr>
+<tr><td>2026-03-01</td><td>LIQUID</td><td>12 – 24 mg/mL</td><td>₱57.00 / mL</td><td>IB-2603-07</td></tr>
+<tr><td>2026-03-01</td><td>DEVICE</td><td>—</td><td>₱60.00 / 개</td><td>IB-2604-02</td></tr>
+</tbody></table>
+<p class="sub" style="margin:18px 0 0">7월 세율을 지금 등록해도 3월 배치의 세액은 바뀌지 않습니다 — 과거 납부액이 소급 변동하지 않는다는 뜻입니다.</p></div>`,
+    }),
+  '/console/exchanges': () =>
+    layout({
+      role: 'admin',
+      title: 'LedgerMark Console · 교환 원장',
+      nav: consoleNav('exchanges'),
+      body: `<h1>교환 원장 · 정산</h1><p class="lede">가맹점이 예약한 교환품은 본사 재고에서 선점되고, 수령·만료가 정산 대상입니다.</p>
+<div class="grid" id="exchange-kpis"><div class="card"><div class="k">예약 중</div><div class="v">37</div><div class="d">재고 선점 상태</div></div>
+<div class="card"><div class="k">수령 완료</div><div class="v">612</div><div class="d">정산 대상</div></div>
+<div class="card"><div class="k">기간 만료</div><div class="v">19</div><div class="d">선점 해제됨</div></div>
+<div class="card"><div class="k">재교환 시도</div><div class="v">0</div><div class="d">구조적으로 차단</div></div></div>
+<div class="panel" id="exchange-settlement"><h2>가맹점별 정산</h2><p class="sub">예약은 재고를 묶고, 수령이 비용을 확정합니다</p>
+<table><thead><tr><th>가맹점</th><th>예약</th><th>수령</th><th>만료</th><th>정산 금액</th><th>상태</th></tr></thead><tbody>
+<tr><td>Store #PH-014</td><td>6</td><td>88</td><td>2</td><td>₱44,000</td><td><span class="pill ok">정산 완료</span></td></tr>
+<tr><td>Store #PH-031</td><td>11</td><td>64</td><td>7</td><td>₱32,000</td><td><span class="pill warn">검토 중</span></td></tr>
+<tr><td>총판 DIST-02</td><td>20</td><td>460</td><td>10</td><td>₱230,000</td><td><span class="pill ok">정산 완료</span></td></tr>
+</tbody></table>
+<p class="sub" style="margin:18px 0 0">수령 시 voucherState 가 NONE 으로 내려가므로, 같은 UID 의 두 번째 교환은 정산에 올라올 수 없습니다.</p></div>`,
     }),
   '/download': () =>
     layout({
