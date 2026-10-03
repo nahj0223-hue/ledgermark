@@ -19,7 +19,7 @@ function parseArgs(argv) {
   const [scenarioPath, ...rest] = argv;
   if (!scenarioPath) {
     throw new Error(
-      'Usage: node src/record.mjs <scenario.json> [--out <dir>] [--only <sceneId>] [--check] [--refresh-auth]',
+      'Usage: node src/record.mjs <scenario.json> [--out <dir>] [--only <sceneId>] [--base-url <url>] [--check] [--refresh-auth]',
     );
   }
   const flags = {};
@@ -40,19 +40,72 @@ function parseArgs(argv) {
     only: flags.only,
     check: Boolean(flags.check),
     refreshAuth: Boolean(flags['refresh-auth']),
+    baseUrl: flags['base-url'],
   };
 }
 
 const exists = (path) => access(path).then(() => true, () => false);
 
-async function runStep(page, step, scene, sceneStartedAt) {
+/**
+ * `{email}` / `{password}` / `{account}` in a sign-in step are filled from the account's
+ * own values, so one sign-in template serves every role. Deep links like
+ * `/login?next=/console&switch=1&email={email}` are the whole reason this exists: the demo
+ * build switches account from the URL, so a role tour needs no second login form.
+ */
+function withVars(value, vars) {
+  if (typeof value === 'string') {
+    return value.replace(/\{(\w+)\}/g, (match, key) => (key in vars ? String(vars[key]) : match));
+  }
+  if (Array.isArray(value)) return value.map((item) => withVars(item, vars));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, withVars(v, vars)]));
+  }
+  return value;
+}
+
+const SELECTOR_STEPS = new Set(['click', 'fill', 'hover', 'highlight', 'wait']);
+
+/**
+ * A step may list several selectors; the first one actually on the page wins.
+ *
+ * This exists because the tour films a deployed build we cannot inspect between takes.
+ * One renamed id otherwise ends a sixteen-scene take at scene three, and the cost of
+ * re-shooting is the whole run, not the one step.
+ */
+async function resolveSelector(page, step, check) {
+  const candidates = Array.isArray(step.selector) ? step.selector : [step.selector];
+  if (candidates.length === 1) return candidates[0];
+  const budget = step.probeMs ?? (check ? 700 : 2_500);
+  for (const candidate of candidates) {
+    try {
+      await page.locator(candidate).first().waitFor({ state: 'attached', timeout: budget });
+      return candidate;
+    } catch {
+      // try the next spelling
+    }
+  }
+  throw new Error(`none of ${candidates.length} selectors matched: ${candidates.join(' | ')}`);
+}
+
+async function runStep(page, step, scene, sceneStartedAt, options = {}) {
+  const { check = false, onSkip } = options;
+  let resolved = step;
   try {
-    return await dispatchStep(page, step, scene, sceneStartedAt);
+    if (SELECTOR_STEPS.has(step.do) && step.selector) {
+      resolved = { ...step, selector: await resolveSelector(page, step, check) };
+    }
+    return await dispatchStep(page, resolved, scene, sceneStartedAt);
   } catch (error) {
-    const target = step.selector ?? step.url ?? '';
-    throw new Error(
-      `${step.do}${target ? ` "${target}"` : ''} — ${error.message.split('\n')[0]}`,
-    );
+    const target = resolved.selector ?? resolved.url ?? '';
+    const reason = `${step.do}${target ? ` "${Array.isArray(target) ? target[0] : target}"` : ''} — ${error.message.split('\n')[0]}`;
+    // `optional` steps are garnish — a KPI to point at, a panel to expand. Losing one
+    // costs a beat of footage; losing the take costs the run. Required steps still fail
+    // hard, so a missing sign-in or a missing page is never papered over.
+    if (step.optional) {
+      onSkip?.(reason);
+      return null;
+    }
+    throw new Error(reason);
   }
 }
 
@@ -125,7 +178,9 @@ async function dispatchStep(page, step, scene, sceneStartedAt) {
     case 'highlight': {
       const ms = step.ms ?? 2000;
       await glideToSelector(page, step.selector);
-      await page.evaluate(([sel, d]) => window.__lmHighlight?.(sel, d), [step.selector, ms]);
+      const box = await page.locator(step.selector).first().boundingBox();
+      if (!box) throw new Error('element has no layout box to highlight');
+      await page.evaluate(([b, d]) => window.__lmHighlight?.(b, d), [box, ms]);
       await page.waitForTimeout(ms);
       break;
     }
@@ -143,40 +198,97 @@ async function dispatchStep(page, step, scene, sceneStartedAt) {
 const hurry = (step, check) => (check ? { ...step, ms: step.do === 'wait' ? step.ms : 0, typeDelayMs: 0 } : step);
 
 /**
- * Sign in once and reuse the cookies for every scene. Repeating a login inside each
- * scene's `setup` works, but it re-types credentials on every take and puts the
- * password on screen in footage that is only trimmed afterwards.
+ * Sign in once per account and reuse the cookies. Repeating a login inside each scene's
+ * `setup` works, but it re-types credentials on every take and puts the password on screen
+ * in footage that is only trimmed afterwards.
+ *
+ * Returns a lookup of account name -> saved session, with `null` holding the session used
+ * by scenes that name no account.
  */
-async function ensureAuthState(browser, scenario, { refreshAuth, check }) {
-  if (!scenario.auth) return undefined;
-  const statePath = resolve(scenario.dir, scenario.auth.statePath);
+async function ensureAuthState(browser, scenario, { refreshAuth, check, accountsInUse }) {
+  if (!scenario.auth) return new Map();
 
-  if (!refreshAuth && (await exists(statePath))) {
-    console.log(`auth   reusing ${scenario.auth.statePath}`);
-    return statePath;
-  }
+  const declared = scenario.auth.accounts ?? {};
+  const names = Object.keys(declared);
+  const resolveAccount = (name) =>
+    Object.fromEntries(
+      Object.entries(declared[name]).map(([key, value]) => {
+        // Credentials come from the environment, never from the scenario file. The demo
+        // build is publicly reachable and this repository is public, so a password
+        // committed here is a password handed to anyone who clones it.
+        if (value && typeof value === 'object' && typeof value.env === 'string') {
+          const fromEnv = process.env[value.env];
+          if (!fromEnv) {
+            throw new Error(
+              `auth.accounts.${name}.${key} needs the ${value.env} environment variable, which is not set`,
+            );
+          }
+          return [key, fromEnv];
+        }
+        return [key, value];
+      }),
+    );
+  // No `accounts` block: one session, shared by every scene — the original behaviour.
+  const jobs = names.length
+    ? names
+        .filter((name) => accountsInUse.has(name))
+        .map((name) => ({ key: name, vars: { account: name, ...resolveAccount(name) } }))
+    : [{ key: null, vars: {} }];
 
-  const context = await browser.newContext({ viewport: scenario.viewport });
-  context.setDefaultTimeout(check ? 5_000 : 30_000);
-  const page = await context.newPage();
-  try {
-    for (const step of scenario.auth.steps) {
-      await runStep(page, hurry(step, check), { baseUrl: scenario.baseUrl }, Date.now());
+  const states = new Map();
+  for (const { key, vars } of jobs) {
+    const relative = withVars(scenario.auth.statePath, vars);
+    const statePath = resolve(scenario.dir, relative);
+    const label = key ?? 'default';
+
+    if (!refreshAuth && (await exists(statePath))) {
+      console.log(`auth   ${label} — reusing ${relative}`);
+      states.set(key, statePath);
+      continue;
     }
-  } catch (error) {
+
+    const context = await browser.newContext({ viewport: scenario.viewport });
+    context.setDefaultTimeout(check ? 5_000 : 30_000);
+    const page = await context.newPage();
+    try {
+      for (const step of scenario.auth.steps) {
+        await runStep(page, hurry(withVars(step, vars), check), { baseUrl: scenario.baseUrl }, Date.now(), { check });
+      }
+    } catch (error) {
+      await context.close();
+      throw new Error(`Sign-in failed for ${label}: ${error.message}`);
+    }
+    await mkdir(dirname(statePath), { recursive: true });
+    await context.storageState({ path: statePath });
     await context.close();
-    throw new Error(`Sign-in failed: ${error.message}`);
+    console.log(`auth   ${label} — signed in -> ${relative}`);
+    states.set(key, statePath);
   }
-  await mkdir(dirname(statePath), { recursive: true });
-  await context.storageState({ path: statePath });
-  await context.close();
-  console.log(`auth   signed in -> ${scenario.auth.statePath}`);
-  return statePath;
+
+  return states;
+}
+
+/** The session a scene films under, or undefined when the scenario has no `auth`. */
+function sessionFor(scene, scenario, states) {
+  if (!states.size) return undefined;
+  const key = scene.as ?? scenario.auth?.defaultAccount ?? null;
+  if (states.has(key)) return states.get(key);
+  // Falling back silently would film the scene as the wrong role, which is exactly the
+  // mistake a multi-role tour must never ship.
+  throw new Error(
+    `Scene "${scene.id}" needs account "${key ?? 'default'}" but no session was prepared for it`,
+  );
 }
 
 async function main() {
-  const { scenarioPath, out, only, check, refreshAuth } = parseArgs(process.argv.slice(2));
+  const { scenarioPath, out, only, check, refreshAuth, baseUrl } = parseArgs(process.argv.slice(2));
   const scenario = await loadScenario(scenarioPath);
+  // The same scenario is rehearsed against the stand-in stage and shot against the
+  // deployed build, so the target is a flag rather than an edit to the scenario.
+  if (baseUrl) {
+    scenario.baseUrl = baseUrl;
+    console.log(`base   ${baseUrl}`);
+  }
 
   const videoDir = join(out, 'scenes');
   if (!check) {
@@ -192,9 +304,18 @@ async function main() {
     args: ['--force-color-profile=srgb', '--hide-scrollbars', '--disable-lcd-text'],
   });
 
-  const storageState = await ensureAuthState(browser, scenario, { refreshAuth, check });
+  // Sign in only for the accounts the selected scenes actually film under, so `--only`
+  // on one scene does not walk a login for all six roles.
+  const accountsInUse = new Set(
+    scenes
+      .filter((scene) => !scene.card)
+      .map((scene) => scene.as ?? scenario.auth?.defaultAccount)
+      .filter(Boolean),
+  );
+  const authStates = await ensureAuthState(browser, scenario, { refreshAuth, check, accountsInUse });
   const manifest = { name: scenario.name, fps: scenario.fps, viewport: scenario.viewport, theme: scenario.theme, scenes: [] };
   const failures = [];
+  const optionalSkips = [];
 
   for (const scene of scenes) {
     if (scene.card) {
@@ -203,6 +324,7 @@ async function main() {
       continue;
     }
 
+    const storageState = sessionFor(scene, scenario, authStates);
     const context = await browser.newContext({
       viewport: scenario.viewport,
       deviceScaleFactor: 1,
@@ -217,6 +339,11 @@ async function main() {
 
     const page = await context.newPage();
     const captions = [];
+    const skipped = [];
+    const noteSkip = (reason) => {
+      skipped.push(reason);
+      console.log(`  skip ${scene.id}  ${reason}`);
+    };
     const openedAt = Date.now();
     // Park the cursor off to the side so the first glide reads as a deliberate move.
     await glideTo(page, scenario.viewport.width * 0.5, scenario.viewport.height * 0.92, { steps: 1, stepDelayMs: 0 });
@@ -229,12 +356,12 @@ async function main() {
       // state never carries over on its own. The footage is still captured (Playwright
       // cannot pause a recording), so measure it and let produce trim it off.
       for (const step of scene.setup ?? []) {
-        await runStep(page, hurry({ ...step, ms: step.ms ?? 0 }, check), { ...scene, baseUrl: scenario.baseUrl }, openedAt);
+        await runStep(page, hurry({ ...step, ms: step.ms ?? 0 }, check), { ...scene, baseUrl: scenario.baseUrl }, openedAt, { check, onSkip: noteSkip });
       }
       startedAt = Date.now();
 
       for (const step of scene.steps) {
-        const caption = await runStep(page, hurry({ ...step }, check), { ...scene, baseUrl: scenario.baseUrl }, startedAt);
+        const caption = await runStep(page, hurry({ ...step }, check), { ...scene, baseUrl: scenario.baseUrl }, startedAt, { check, onSkip: noteSkip });
         if (caption) captions.push(caption);
       }
     } catch (error) {
@@ -255,15 +382,21 @@ async function main() {
     await context.close();
 
     if (check) {
-      console.log(failed ? `FAIL   ${scene.id}  ${failed}` : `ok     ${scene.id}`);
+      if (skipped.length) optionalSkips.push({ scene: scene.id, skipped });
+      console.log(
+        failed
+          ? `FAIL   ${scene.id}  ${failed}`
+          : `ok     ${scene.id}${skipped.length ? `  (${skipped.length} optional step(s) skipped)` : ''}`,
+      );
       continue;
     }
 
     const target = join(videoDir, `${scene.id}.webm`);
     await rename(rawPath, target);
-    manifest.scenes.push({ id: scene.id, kind: 'screen', file: `scenes/${scene.id}.webm`, seconds, trimStart, captions });
+    manifest.scenes.push({ id: scene.id, kind: 'screen', as: scene.as ?? null, file: `scenes/${scene.id}.webm`, seconds, trimStart, captions, skipped });
     console.log(
       `scene  ${scene.id}  ${seconds.toFixed(1)}s  ${captions.length} caption(s)` +
+        (scene.as ? `  as ${scene.as}` : '') +
         (trimStart > 0.05 ? `  (+${trimStart.toFixed(1)}s setup trimmed)` : ''),
     );
   }
@@ -271,6 +404,13 @@ async function main() {
   await browser.close();
 
   if (check) {
+    const skippedCount = optionalSkips.reduce((n, entry) => n + entry.skipped.length, 0);
+    if (skippedCount) {
+      console.log(
+        `\n${skippedCount} optional step(s) would be skipped — the take survives, but that `
+          + 'footage is missing. Fix the selectors to get it back.',
+      );
+    }
     console.log(
       failures.length
         ? `\n${failures.length} scene(s) failed — fix the selectors above, then re-run --check.`

@@ -85,6 +85,73 @@ FAIL   30-trace   wait "#also-missing" — page.waitForSelector: Timeout 5000ms 
 
 `.auth/`는 `.gitignore`에 들어 있다. 세션 쿠키가 들어 있으므로 커밋하지 말 것.
 
+### 역할별 계정 전환
+
+LedgerMark는 소비자·가맹점·현장 단속·관세청·통합 관리가 **같은 원장을 다른 권한으로**
+보는 제품이다. 그 구조를 보여주려면 한 영상 안에서 계정이 바뀌어야 한다. `auth.accounts`에
+계정을 선언하고 장면에 `as`를 적으면, 로그인 스텝이 계정별 값으로 채워져 각각 별도
+세션으로 저장된다.
+
+```json
+"auth": {
+  "statePath": ".auth/{account}.json",
+  "defaultAccount": "admin",
+  "accounts": {
+    "field": { "email": "officer@pnp.test", "password": { "env": "LM_DEMO_PASSWORD" }, "home": "/field" },
+    "admin": { "email": "admin@ledgermark.test", "password": { "env": "LM_DEMO_PASSWORD" }, "home": "/console" }
+  },
+  "steps": [
+    { "do": "goto", "url": "/login?next={home}&switch=1&email={email}" },
+    { "do": "fill", "selector": "#password", "value": "{password}" },
+    { "do": "click", "selector": "button[type=submit]" }
+  ]
+}
+```
+
+- `{email}` `{password}` `{home}` `{account}` 는 계정 값으로 치환된다.
+- 계정이 둘 이상이면 `statePath`에 `{account}`가 **반드시** 들어가야 한다. 안 그러면 뒤에
+  로그인한 계정이 앞 세션을 덮어쓰고, 모든 장면이 마지막 계정으로 찍힌다 — 영상만 보면
+  멀쩡해 보이는 종류의 사고다.
+- 비밀번호는 `{ "env": "VAR" }` 형태만 허용한다. 이 저장소는 공개 저장소이고 데모 사이트는
+  외부에서 접속 가능하므로, 시나리오에 적힌 비밀번호는 곧 공개된 비밀번호다. 검증 단계에서
+  `pass`/`secret`/`token`이 들어간 키가 평문이면 거부한다.
+- `--only`로 한 장면만 찍을 때는 그 장면이 쓰는 계정만 로그인한다.
+
+### 셀렉터 후보와 선택적 스텝
+
+배포된 빌드를 찍을 때는 DOM을 매 테이크마다 확인할 수 없다. `selector`에 배열을 주면
+**실제로 존재하는 첫 번째**가 선택된다.
+
+```json
+{ "do": "click", "selector": ["button:has-text(\"조회\")", "button[type=submit]", "#uid-submit"] }
+```
+
+강조용 KPI처럼 **없어도 영상이 성립하는** 스텝에는 `"optional": true`를 준다. 실패하면
+그 스텝만 건너뛰고 로그에 남긴다. 21장면짜리 테이크가 3번째 장면에서 멈추는 쪽이
+훨씬 비싸기 때문이다. 반대로 `goto`에는 `optional`을 허용하지 않는다 — 페이지가 안 열린
+채로 다음 스텝이 전부 이전 화면 위에서 찍히기 때문이다.
+
+`--check`는 건너뛸 스텝까지 미리 세어서 알려준다.
+
+### 스탠드인 스테이지
+
+배포 데모에 네트워크가 닿지 않거나 사이트를 띄우기 전에 리허설할 때 쓰는 대역 서버다.
+라우트·역할·UID 상태 머신·모듈 목록이 실제 앱과 같은 모양이고, 각 스텝의 **첫 번째**
+셀렉터 후보를 그대로 구현한다.
+
+```bash
+node scripts/stage-server.mjs --port 4173
+npm run check -- scenarios/ir-full-tour.json --base-url http://127.0.0.1:4173 --check
+```
+
+여기서 통과한다는 것은 시나리오의 **구조**(장면 수, 역할 전환, 트리밍, 캡션, 편집)가
+맞다는 뜻이지, 실제 셀렉터가 맞다는 뜻이 아니다. 실제 셀렉터는 배포된 빌드를 상대로
+`--check`를 돌려야 확인된다. 모든 프레임에 `STAND-IN STAGE · NOT PRODUCT FOOTAGE`
+워터마크가 박히는 것은 의도된 것이다 — 대역 화면 스틸이 IR 자료에 제품 화면으로
+섞여 들어가는 사고를 막는다.
+
+`--base-url`로 같은 시나리오를 리허설용 스테이지와 실제 배포본 양쪽에 쓴다.
+
 ### 화면의 실제 데이터 가리기
 
 IR 영상은 투자자에게 메일로 전달되므로, 실제 거래처명·사업자번호·금액이 그대로 담기면
@@ -124,6 +191,13 @@ Chromium은 클라우드 컨테이너에만 미리 깔려 있으므로 `npx play
 `npm run doctor`가 전부 PASS면 준비된 것이다.
 
 앱을 먼저 띄운 뒤(예: `npm run dev`), 시나리오의 `baseUrl`을 그 주소로 맞추고 녹화한다.
+
+## 수록 시나리오
+
+| 파일 | 길이 | 용도 |
+|---|---|---|
+| `scenarios/signup-to-trace.json` | 약 40초 | 등록 → 원장 기록 → 추적, 3단 요약본 |
+| `scenarios/ir-full-tour.json` | 약 3분 | 5개 역할 전수 투어 (스토리보드: `storyboard/ir-full-tour.md`) |
 
 ## 아직 남은 것
 

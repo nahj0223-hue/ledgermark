@@ -47,10 +47,13 @@ export const CURSOR_INIT_SCRIPT = `
     setTimeout(() => r.remove(), 480);
   };
 
-  window.__lmHighlight = (selector, ms) => {
-    const target = document.querySelector(selector);
-    if (!target) return;
-    const box = target.getBoundingClientRect();
+  // Takes a rect rather than a selector: the box is measured by Playwright, which
+  // understands engines like ":has-text()" that document.querySelector does not. Passing
+  // a selector in here used to return early and draw nothing — a silent miss, and the
+  // worst kind, because the take still ends with a video file that merely lacks the point
+  // it was shot to make.
+  window.__lmHighlight = (box, ms) => {
+    if (!box) return;
     const pad = 8;
     const ring = document.createElement('div');
     Object.assign(ring.style, {
