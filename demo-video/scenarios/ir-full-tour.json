@@ -11,35 +11,42 @@
     "defaultAccount": "admin",
     "accounts": {
       "consumer": {
-        "email": "ramon@demo.ph",
+        "email": "consumer@ledgermark.com",
         "password": {
           "env": "LM_DEMO_PASSWORD"
         },
         "home": "/app"
       },
       "store": {
-        "email": "store@demo.ph",
+        "email": "store@ledgermark.com",
+        "password": {
+          "env": "LM_DEMO_PASSWORD"
+        },
+        "home": "/partner"
+      },
+      "distributor": {
+        "email": "distributor@ledgermark.com",
         "password": {
           "env": "LM_DEMO_PASSWORD"
         },
         "home": "/partner"
       },
       "field": {
-        "email": "officer@pnp.test",
+        "email": "officer@ledgermark.com",
         "password": {
           "env": "LM_DEMO_PASSWORD"
         },
         "home": "/field"
       },
       "inspector": {
-        "email": "customs@boc.test",
+        "email": "inspector@ledgermark.com",
         "password": {
           "env": "LM_DEMO_PASSWORD"
         },
-        "home": "/customs"
+        "home": "/console"
       },
       "admin": {
-        "email": "admin@ledgermark.test",
+        "email": "admin@ledgermark.com",
         "password": {
           "env": "LM_DEMO_PASSWORD"
         },
@@ -313,10 +320,53 @@
       "id": "25-chapter-store",
       "card": {
         "eyebrow": "2 / 4",
-        "headline": "가맹점 — 판매와 교환을 원장에 쓴다",
+        "headline": "총판·가맹점 — 판매와 교환을 원장에 쓴다",
         "sub": "연령확인을 통과하지 못하면 판매 자체가 기록되지 않습니다."
       },
       "seconds": 3.8
+    },
+    {
+      "id": "28-distributor",
+      "as": "distributor",
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/partner"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "main",
+            "body"
+          ],
+          "timeoutMs": 20000
+        },
+        {
+          "do": "caption",
+          "text": "총판 — 통관된 물량을 소매로 내린다",
+          "sub": "같은 /partner 화면이지만 총판 권한에서는 하역과 교환 건수가 보입니다",
+          "ms": 4600
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "main",
+            "body"
+          ],
+          "ms": 2600,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "WHOLESALE → RETAIL_SOLD 사이가 비면 밀수다",
+          "sub": "총판 단계를 원장에 묶어야 현장 판정의 '통관 기록 없음'이 성립합니다",
+          "ms": 4600
+        },
+        {
+          "do": "settle",
+          "ms": 900
+        }
+      ]
     },
     {
       "id": "30-store-sale",
@@ -624,7 +674,7 @@
       "steps": [
         {
           "do": "goto",
-          "url": "/customs"
+          "url": "/console"
         },
         {
           "do": "wait",
@@ -639,7 +689,7 @@
           "do": "caption",
           "text": "관세청 — 조회 전용 정부 포털",
           "ms": 4600,
-          "sub": "같은 원장을 세액 관점으로 봅니다. 쓰기 권한은 없습니다"
+          "sub": "같은 /console 주소인데 권한이 다르면 다른 제품이 됩니다. 쓰기 권한은 없습니다"
         },
         {
           "do": "highlight",

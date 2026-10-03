@@ -54,10 +54,16 @@ export const CURSOR_INIT_SCRIPT = `
   // it was shot to make.
   window.__lmHighlight = (box, ms) => {
     if (!box) return;
+    // Playwright reports {x,y}; DOMRect reports {left,top}. Reading only one spelling
+    // yields NaN, which CSS drops, and the ring lands wherever the layout puts it with
+    // left/top auto — visibly framing the wrong thing rather than failing.
+    const left = box.left ?? box.x;
+    const top = box.top ?? box.y;
+    if (!Number.isFinite(left) || !Number.isFinite(top)) return;
     const pad = 8;
     const ring = document.createElement('div');
     Object.assign(ring.style, {
-      position: 'fixed', left: (box.left - pad) + 'px', top: (box.top - pad) + 'px',
+      position: 'fixed', left: (left - pad) + 'px', top: (top - pad) + 'px',
       width: (box.width + pad * 2) + 'px', height: (box.height + pad * 2) + 'px',
       border: '3px solid rgba(74,222,128,.95)', borderRadius: '10px',
       boxShadow: '0 0 0 9999px rgba(11,13,16,.55)', zIndex: '2147483645',

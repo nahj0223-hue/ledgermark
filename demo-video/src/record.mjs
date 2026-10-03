@@ -5,7 +5,8 @@
  * can be re-shot on its own — during IR prep the demo script changes far more often than
  * the app does.
  */
-import { mkdir, rm, rename, writeFile, access } from 'node:fs/promises';
+import { mkdir, rm, rename, writeFile, readFile, access } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { join, resolve, dirname } from 'node:path';
 import { chromium } from 'playwright-core';
 import { chromiumPath } from './lib/env.mjs';
@@ -180,6 +181,14 @@ async function dispatchStep(page, step, scene, sceneStartedAt) {
       await glideToSelector(page, step.selector);
       const box = await page.locator(step.selector).first().boundingBox();
       if (!box) throw new Error('element has no layout box to highlight');
+      // `:has-text()` matches ancestors too and returns the outermost one, so a fallback
+      // selector can quietly resolve to a page-sized container. The ring then frames the
+      // whole screen, which points at nothing — a highlight that highlights everything is
+      // the same as no highlight, except it looks deliberate.
+      const view = page.viewportSize();
+      if (view && box.width * box.height > view.width * view.height * 0.8) {
+        throw new Error('matched a page-sized container, not a thing to point at');
+      }
       await page.evaluate(([b, d]) => window.__lmHighlight?.(b, d), [box, ms]);
       await page.waitForTimeout(ms);
       break;
@@ -240,11 +249,27 @@ async function ensureAuthState(browser, scenario, { refreshAuth, check, accounts
     const relative = withVars(scenario.auth.statePath, vars);
     const statePath = resolve(scenario.dir, relative);
     const label = key ?? 'default';
+    // Fingerprint what produced this session — the account's values and the sign-in steps.
+    // Change an account's email and the old cookies still work; every scene then films as
+    // whoever signed in last time, and nothing in the footage says so. Hash, never values:
+    // the sidecar must not become somewhere a password ends up at rest.
+    const fingerprintPath = `${statePath}.fingerprint`;
+    const fingerprint = createHash('sha256')
+      .update(JSON.stringify({ vars, steps: scenario.auth.steps }))
+      .digest('hex');
 
-    if (!refreshAuth && (await exists(statePath))) {
+    const reusable =
+      !refreshAuth &&
+      (await exists(statePath)) &&
+      (await readFile(fingerprintPath, 'utf8').catch(() => null))?.trim() === fingerprint;
+
+    if (reusable) {
       console.log(`auth   ${label} — reusing ${relative}`);
       states.set(key, statePath);
       continue;
+    }
+    if (!refreshAuth && (await exists(statePath))) {
+      console.log(`auth   ${label} — account changed since ${relative} was saved, signing in again`);
     }
 
     const context = await browser.newContext({ viewport: scenario.viewport });
@@ -260,6 +285,7 @@ async function ensureAuthState(browser, scenario, { refreshAuth, check, accounts
     }
     await mkdir(dirname(statePath), { recursive: true });
     await context.storageState({ path: statePath });
+    await writeFile(fingerprintPath, `${fingerprint}\n`);
     await context.close();
     console.log(`auth   ${label} — signed in -> ${relative}`);
     states.set(key, statePath);

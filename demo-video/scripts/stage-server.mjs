@@ -275,10 +275,19 @@ createServer((req, res) => {
     return;
   }
 
-  const render = PAGES[path];
+  // The real console renders the customs view, not the admin modules, when the signed-in
+  // role is GOV_INSPECTOR — same URL, different product. The stage has to model that or
+  // the one scene whose whole argument is "권한이 다르면 다른 화면" films the wrong page.
+  const signedInAs = decodeURIComponent(
+    /lm_stage_session=([^;]*)/.exec(req.headers.cookie ?? '')?.[1] ?? '',
+  );
+  const effectivePath =
+    path === '/console' && signedInAs.startsWith('inspector@') ? '/customs' : path;
+
+  const render = PAGES[effectivePath];
   if (!render) {
     res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });
-    res.end(layout({ title: '404', body: `<h1>404</h1><p class="lede">${path} 는 이 스탠드인에 없습니다.</p>` }));
+    res.end(layout({ title: '404', body: `<h1>404</h1><p class="lede">${effectivePath} 는 이 스탠드인에 없습니다.</p>` }));
     return;
   }
 
