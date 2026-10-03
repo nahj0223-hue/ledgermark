@@ -1,0 +1,76 @@
+name: build-test
+
+# 소스가 아직 올라오지 않은 동안에도 워크플로가 실패로 남지 않도록, 루트 package.json이
+# 있을 때만 빌드 단계를 실행한다. 업로드가 끝나는 순간부터 자동으로 전체 검사가 돈다.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ledgermark
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ledgermark?schema=public
+      SESSION_SECRET: ci-only-not-a-real-secret
+      # 앵커링은 CI에서 외부 체인에 쓰지 않는다. 키 없이도 빌드가 통과해야 한다.
+      ANCHOR_MODE: simulated
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: detect
+        name: Detect LedgerMark source
+        run: |
+          if [ -f package.json ] && [ -f prisma/schema.prisma ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::루트에 package.json / prisma/schema.prisma 가 없습니다. 소스 업로드 전이라 빌드를 건너뜁니다."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.present == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        if: steps.detect.outputs.present == 'true'
+        # package-lock.json 이 함께 올라오지 않았을 수 있으므로 ci -> install 로 떨어뜨린다.
+        run: npm ci || npm install
+
+      - name: Prisma generate
+        if: steps.detect.outputs.present == 'true'
+        run: npx prisma generate
+
+      - name: Prisma migrate
+        if: steps.detect.outputs.present == 'true'
+        run: npx prisma migrate deploy
+
+      - name: Typecheck
+        if: steps.detect.outputs.present == 'true'
+        run: npm run typecheck --if-present
+
+      - name: Unit tests
+        if: steps.detect.outputs.present == 'true'
+        run: npm test --if-present
+
+      - name: Next build
+        if: steps.detect.outputs.present == 'true'
+        run: npm run build
