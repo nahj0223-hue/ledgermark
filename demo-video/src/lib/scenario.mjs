@@ -108,6 +108,12 @@ export async function loadScenario(path) {
       errors.push(`${where} needs either a \`card\` or a non-empty \`steps\` array`);
     }
 
+    if (scene.signedOut && scene.as) {
+      errors.push(`${where} sets both \`signedOut\` and \`as\` — pick one`);
+    }
+    if (scene.signedOut && scene.card) {
+      errors.push(`${where}.signedOut is meaningless on a card — cards film no app`);
+    }
     if (scene.as && !accountNames.includes(scene.as)) {
       errors.push(
         `${where}.as "${scene.as}" is not in \`auth.accounts\``

@@ -167,6 +167,31 @@ const PAGES = {
 <div class="card"><div class="k">원장 기록</div><div class="v">38</div><div class="d">누락 0</div></div></div>
 <button class="btn" id="kiosk-scan">스캔 시작</button></div>`,
     }),
+  // Reachable with no session at all — the consumer buying at the machine has no account.
+  // The staff POS view at the same route is the signed-in one; see effectivePath below.
+  '/kiosk-consumer': () =>
+    layout({
+      role: 'consumer',
+      title: 'ConiaMark 자판기',
+      body: `<h1>자판기 구매</h1><p class="lede">로그인 없이 구매합니다. 연령확인만 통과하면 거래가 성립하고, 그 사실이 원장에 기록됩니다.</p>
+<div class="panel" id="kiosk-products"><h2>제품 선택</h2><p class="sub">재고는 UID 단위로 잡혀 있습니다 — 판매 즉시 해당 UID 가 전이됩니다</p>
+<table><thead><tr><th>제품</th><th>용량 · 농도</th><th>가격</th><th>재고</th><th></th></tr></thead><tbody>
+<tr><td>ConiaMark Classic</td><td>30mL · 12mg/mL</td><td>₱480</td><td>14</td><td><button class="btn" id="kiosk-pick" style="padding:8px 18px;font-size:14px">선택</button></td></tr>
+<tr><td>ConiaMark Light</td><td>60mL · 6mg/mL</td><td>₱620</td><td>9</td><td><span class="pill">선택</span></td></tr>
+<tr><td>ConiaMark Device</td><td>—</td><td>₱1,850</td><td>3</td><td><span class="pill">선택</span></td></tr>
+</tbody></table></div>
+<div class="panel" id="kiosk-age"><h2>연령확인</h2><p class="sub">RA 11900 · 신분증 스캔 + 라이브니스 · 통과하지 못하면 결제 단계로 넘어가지 않습니다</p>
+<div class="row"><span class="pill ok">신분증 스캔 완료</span><span class="pill ok">라이브니스 통과</span><span class="pill ok">만 18세 이상</span></div>
+<div class="row" style="margin-top:18px"><button class="btn" id="kiosk-buy">결제</button><span style="font-size:14px;color:#6b7280">신분증 이미지는 저장하지 않고 판정 결과만 남깁니다</span></div></div>
+<div class="panel" id="kiosk-receipt"><h2>거래 완료</h2><p class="sub">KioskSale · 연령확인 · UID 전이 · 원장 기록이 단일 트랜잭션</p>
+<table><thead><tr><th>항목</th><th>값</th></tr></thead><tbody>
+<tr><td>UID</td><td>PH-2026-DEMO-004912</td></tr>
+<tr><td>상태 전이</td><td>WHOLESALE → <span class="pill ok">RETAIL_SOLD</span></td></tr>
+<tr><td>연령확인</td><td>RA11900_ID_LIVENESS · 통과</td></tr>
+<tr><td>구매자 식별</td><td><span class="pill">익명 · 계정 없음</span></td></tr>
+<tr><td>원장 기록</td><td>#186,403</td></tr>
+</tbody></table></div>`,
+    }),
   '/field': () =>
     layout({
       role: 'field',
@@ -352,8 +377,12 @@ createServer((req, res) => {
   const signedInAs = decodeURIComponent(
     /lm_stage_session=([^;]*)/.exec(req.headers.cookie ?? '')?.[1] ?? '',
   );
-  const effectivePath =
-    path === '/console' && signedInAs.startsWith('inspector@') ? '/customs' : path;
+  let effectivePath = path;
+  if (path === '/console' && signedInAs.startsWith('inspector@')) effectivePath = '/customs';
+  // No session at the kiosk means a consumer is standing in front of it; a signed-in
+  // session means staff. Same route, as the deployed build has it — /kiosk is not behind
+  // the auth middleware at all.
+  if (path === '/kiosk' && !signedInAs) effectivePath = '/kiosk-consumer';
 
   const render = PAGES[effectivePath];
   if (!render) {

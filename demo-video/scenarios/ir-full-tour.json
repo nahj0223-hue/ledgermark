@@ -657,6 +657,94 @@
       ]
     },
     {
+      "id": "42-kiosk-consumer",
+      "signedOut": true,
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/kiosk"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#kiosk-products",
+            "section:has-text(\"제품\")",
+            "main"
+          ],
+          "timeoutMs": 20000
+        },
+        {
+          "do": "caption",
+          "text": "키오스크 — 로그인 없이 구매한다",
+          "sub": "이 장면만 로그아웃 상태로 촬영했습니다. 소비자는 계정이 없습니다",
+          "ms": 4800
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"선택\")",
+            "#kiosk-pick"
+          ],
+          "ms": 1400,
+          "optional": true
+        },
+        {
+          "do": "scroll",
+          "to": 420,
+          "ms": 1500
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#kiosk-age",
+            "section:has-text(\"연령확인\")"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "연령확인을 통과해야 결제 단계가 열린다",
+          "sub": "RA 11900 · 신분증 이미지는 저장하지 않고 판정 결과만 원장에 남깁니다",
+          "ms": 4800
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"결제\")",
+            "#kiosk-buy"
+          ],
+          "ms": 1600,
+          "optional": true
+        },
+        {
+          "do": "scroll",
+          "to": 900,
+          "ms": 1500
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#kiosk-receipt",
+            "section:has-text(\"거래\")",
+            "table"
+          ],
+          "ms": 3200,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "구매자는 익명인데 제품은 추적된다",
+          "sub": "추적 대상은 사람이 아니라 UID 입니다 — 개인정보 수집 없이 유통 추적이 성립합니다",
+          "ms": 5200
+        },
+        {
+          "do": "settle",
+          "ms": 1000
+        }
+      ]
+    },
+    {
       "id": "45-chapter-enforce",
       "card": {
         "eyebrow": "3 / 4",

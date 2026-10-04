@@ -296,6 +296,9 @@ async function ensureAuthState(browser, scenario, { refreshAuth, check, accounts
 
 /** The session a scene films under, or undefined when the scenario has no `auth`. */
 function sessionFor(scene, scenario, states) {
+  // Some screens are reachable without signing in, and that is the thing being shown.
+  // Filming them under a session would quietly prove the opposite of the claim.
+  if (scene.signedOut) return undefined;
   if (!states.size) return undefined;
   const key = scene.as ?? scenario.auth?.defaultAccount ?? null;
   if (states.has(key)) return states.get(key);
@@ -334,7 +337,7 @@ async function main() {
   // on one scene does not walk a login for all six roles.
   const accountsInUse = new Set(
     scenes
-      .filter((scene) => !scene.card)
+      .filter((scene) => !scene.card && !scene.signedOut)
       .map((scene) => scene.as ?? scenario.auth?.defaultAccount)
       .filter(Boolean),
   );
@@ -419,10 +422,10 @@ async function main() {
 
     const target = join(videoDir, `${scene.id}.webm`);
     await rename(rawPath, target);
-    manifest.scenes.push({ id: scene.id, kind: 'screen', as: scene.as ?? null, file: `scenes/${scene.id}.webm`, seconds, trimStart, captions, skipped });
+    manifest.scenes.push({ id: scene.id, kind: 'screen', as: scene.signedOut ? 'signed-out' : scene.as ?? null, file: `scenes/${scene.id}.webm`, seconds, trimStart, captions, skipped });
     console.log(
       `scene  ${scene.id}  ${seconds.toFixed(1)}s  ${captions.length} caption(s)` +
-        (scene.as ? `  as ${scene.as}` : '') +
+        (scene.signedOut ? '  signed out' : scene.as ? `  as ${scene.as}` : '') +
         (trimStart > 0.05 ? `  (+${trimStart.toFixed(1)}s setup trimmed)` : ''),
     );
   }
