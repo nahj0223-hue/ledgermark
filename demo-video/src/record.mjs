@@ -76,15 +76,30 @@ const SELECTOR_STEPS = new Set(['click', 'fill', 'hover', 'highlight', 'wait']);
 async function resolveSelector(page, step, check) {
   const candidates = Array.isArray(step.selector) ? step.selector : [step.selector];
   if (candidates.length === 1) return candidates[0];
+
+  // Ask all of them at once, not one after another. Probing in order charges the full
+  // timeout for every spelling that misses, so a step whose working selector is listed
+  // last paid four seconds of dead air on screen — in a 28-scene take that was most of a
+  // minute of the runtime, spent waiting for selectors we already knew were wrong.
+  const present = await Promise.all(candidates.map((c) => page.locator(c).count().catch(() => 0)));
+  const here = present.findIndex((count) => count > 0);
+  if (here !== -1) return candidates[here];
+
+  // Nothing on the page yet, so wait — still concurrently, and still preferring the
+  // earliest spelling when several arrive together.
   const budget = step.probeMs ?? (check ? 700 : 2_500);
-  for (const candidate of candidates) {
-    try {
-      await page.locator(candidate).first().waitFor({ state: 'attached', timeout: budget });
-      return candidate;
-    } catch {
-      // try the next spelling
-    }
-  }
+  const settled = await Promise.all(
+    candidates.map((candidate) =>
+      page
+        .locator(candidate)
+        .first()
+        .waitFor({ state: 'attached', timeout: budget })
+        .then(() => true, () => false),
+    ),
+  );
+  const arrived = settled.findIndex(Boolean);
+  if (arrived !== -1) return candidates[arrived];
+
   throw new Error(`none of ${candidates.length} selectors matched: ${candidates.join(' | ')}`);
 }
 

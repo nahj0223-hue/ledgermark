@@ -148,7 +148,7 @@
             "#uid-input"
           ],
           "value": "PH-2026-DEMO-000001",
-          "typeDelayMs": 52
+          "typeDelayMs": 30
         },
         {
           "do": "click",
@@ -517,7 +517,7 @@
             "input[placeholder*=\"UID\"]"
           ],
           "value": "PH-2026-DEMO-000001",
-          "typeDelayMs": 50
+          "typeDelayMs": 30
         },
         {
           "do": "click",
@@ -685,13 +685,13 @@
             "button:has-text(\"선택\")",
             "#kiosk-pick"
           ],
-          "ms": 1400,
+          "ms": 700,
           "optional": true
         },
         {
           "do": "scroll",
           "to": 420,
-          "ms": 1500
+          "ms": 1000
         },
         {
           "do": "highlight",
@@ -699,7 +699,7 @@
             "#kiosk-age",
             "section:has-text(\"연령확인\")"
           ],
-          "ms": 3000,
+          "ms": 2400,
           "optional": true
         },
         {
@@ -714,13 +714,13 @@
             "button:has-text(\"결제\")",
             "#kiosk-buy"
           ],
-          "ms": 1600,
+          "ms": 900,
           "optional": true
         },
         {
           "do": "scroll",
           "to": 900,
-          "ms": 1500
+          "ms": 1000
         },
         {
           "do": "highlight",
@@ -729,7 +729,7 @@
             "section:has-text(\"거래\")",
             "table"
           ],
-          "ms": 3200,
+          "ms": 2800,
           "optional": true
         },
         {
@@ -740,7 +740,7 @@
         },
         {
           "do": "settle",
-          "ms": 1000
+          "ms": 800
         }
       ]
     },
@@ -784,7 +784,7 @@
             "input[placeholder*=\"UID\"]"
           ],
           "value": "PH-2026-DEMO-000001",
-          "typeDelayMs": 50
+          "typeDelayMs": 30
         },
         {
           "do": "click",
@@ -793,7 +793,7 @@
             "button[type=\"submit\"]",
             "#field-check"
           ],
-          "ms": 1500
+          "ms": 900
         },
         {
           "do": "highlight",
@@ -802,7 +802,7 @@
             "[data-testid=\"verdict\"]",
             "text=VERIFIED"
           ],
-          "ms": 2600
+          "ms": 2200
         },
         {
           "do": "scroll",
@@ -821,12 +821,12 @@
             "#field-verdicts",
             "table"
           ],
-          "ms": 3000,
+          "ms": 2600,
           "optional": true
         },
         {
           "do": "settle",
-          "ms": 800
+          "ms": 600
         }
       ]
     },

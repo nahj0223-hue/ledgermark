@@ -16,13 +16,24 @@ const CAPTION_FADE = 0.3;
 
 function parseArgs(argv) {
   const [takeDir, ...rest] = argv;
-  if (!takeDir) throw new Error('Usage: node src/produce.mjs <take-dir> [--out <file.mp4>]');
+  if (!takeDir) {
+    throw new Error('Usage: node src/produce.mjs <take-dir> [--out <file.mp4>] [--speed <factor>]');
+  }
   const flags = {};
   for (let i = 0; i < rest.length; i += 2) {
     if (!rest[i]?.startsWith('--')) throw new Error(`Unexpected argument "${rest[i]}"`);
     flags[rest[i].slice(2)] = rest[i + 1];
   }
-  return { takeDir: resolve(takeDir), out: resolve(flags.out ?? join(takeDir, 'ledgermark-ir-demo.mp4')) };
+  const speed = Number(flags.speed ?? 1);
+  if (!Number.isFinite(speed) || speed <= 0) throw new Error(`--speed must be a positive number`);
+  // Past about 1.5x the Korean captions stop being readable at a glance, which is the one
+  // thing a speed-up must not cost: the footage still parses, the sentences do not.
+  if (speed > 1.5) throw new Error(`--speed ${speed} is too fast for the captions to be read`);
+  return {
+    takeDir: resolve(takeDir),
+    out: resolve(flags.out ?? join(takeDir, 'ledgermark-ir-demo.mp4')),
+    speed,
+  };
 }
 
 async function renderPngs(manifest, workDir) {
@@ -104,7 +115,7 @@ async function buildScreenSegment(scene, captionPngs, fps, takeDir, out) {
 }
 
 async function main() {
-  const { takeDir, out } = parseArgs(process.argv.slice(2));
+  const { takeDir, out, speed } = parseArgs(process.argv.slice(2));
   const manifest = JSON.parse(await readFile(join(takeDir, 'manifest.json'), 'utf8'));
   const workDir = join(takeDir, '.work');
   await rm(workDir, { recursive: true, force: true });
@@ -130,14 +141,22 @@ async function main() {
 
   // A video-only mp4 makes some presentation software refuse the file outright, so mux a
   // silent stereo track; live narration is layered over this in the pitch itself.
+  //
+  // At 1x the segments are copied rather than re-encoded. A speed change has to retime
+  // every frame, so that pass re-encodes — the only reason to pay for it is an explicit
+  // --speed, which is why it is not the default.
+  const timing = speed === 1
+    ? ['-c:v', 'copy']
+    : ['-filter:v', `setpts=PTS/${speed},fps=${manifest.fps}`, ...VIDEO_ARGS];
+
   await ffmpeg([
     '-f', 'concat', '-safe', '0', '-i', listFile,
     '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo',
-    '-c:v', 'copy', '-c:a', 'aac', '-b:a', '128k', '-shortest',
+    ...timing, '-c:a', 'aac', '-b:a', '128k', '-shortest',
     '-movflags', '+faststart', out,
-  ], { label: 'concat' });
+  ], { label: speed === 1 ? 'concat' : `concat @ ${speed}x` });
 
-  console.log(`\nmaster -> ${out}`);
+  console.log(`\nmaster -> ${out}${speed === 1 ? '' : `  (${speed}x)`}`);
 }
 
 await main();

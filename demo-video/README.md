@@ -12,6 +12,7 @@ AI로 생성한 컨셉 영상이 아니라 살아 있는 앱을 조작한 화면
 | 환경 점검 | `npm run doctor` | Chromium·ffmpeg·인코더 가용성 |
 | 녹화 | `npm run record -- scenarios/example.json --out out/take-1` | 장면별 `.webm` + `manifest.json` |
 | 편집 | `npm run produce -- out/take-1` | `ledgermark-ir-demo.mp4` |
+| 배속본 | `npm run produce -- out/take-1 --speed 1.2 --out fast.mp4` | 같은 테이크의 1.2배속 |
 
 ```bash
 npm install
@@ -181,6 +182,19 @@ IR 영상은 투자자에게 메일로 전달되므로, 실제 거래처명·사
 시나리오는 녹화 시작 전에 전부 검증한다 — 6장면짜리 대본의 오타가 앱을 다 띄운 뒤
 몇 분 지나서야 드러나는 것을 막기 위해서다.
 
+## 배속본
+
+```bash
+npm run produce -- out/full --out out/full/fast.mp4 --speed 1.2
+```
+
+같은 테이크에서 길이만 다른 파일을 하나 더 만든다. 메일로 먼저 보낼 때처럼 길이가 곧
+열람률인 자리에 쓴다. 1.5배를 넘기면 거부한다 — 그 위로는 화면은 따라가도 한글 캡션이
+한눈에 읽히지 않고, 그건 배속이 치러도 되는 비용이 아니다.
+
+1x 는 세그먼트를 복사해 붙이지만 배속은 전 프레임을 재타이밍해야 해서 재인코딩한다.
+기본값으로 두지 않은 이유다.
+
 ## 설계상 알아둘 것
 
 - **커서가 보인다.** 헤드리스 Chromium은 마우스를 녹화하지 않아 UI가 저절로 움직이는 것처럼
@@ -206,7 +220,7 @@ Chromium은 클라우드 컨테이너에만 미리 깔려 있으므로 `npx play
 | 파일 | 길이 | 용도 |
 |---|---|---|
 | `scenarios/signup-to-trace.json` | 약 40초 | 등록 → 원장 기록 → 추적, 3단 요약본 |
-| `scenarios/ir-full-tour.json` | 4분 17초 | 6개 역할 · 28장면 전수 투어 (스토리보드: `storyboard/ir-full-tour.md`) |
+| `scenarios/ir-full-tour.json` | 3분 52초 | 6개 역할 · 28장면 전수 투어 (스토리보드: `storyboard/ir-full-tour.md`) |
 
 ## 아직 남은 것
 
