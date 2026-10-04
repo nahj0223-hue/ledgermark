@@ -4,3 +4,8 @@ out/
 # Saved sign-in state holds live session cookies and tokens for the demo account.
 .auth/
 **/.auth/
+
+# Outreach copy — fundraising posture, target lists, draft emails. This repository is
+# public, so these stay on disk and go out through whatever channel the recipient is
+# actually meant to receive them on.
+outreach/
