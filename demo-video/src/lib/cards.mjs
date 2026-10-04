@@ -51,6 +51,21 @@ body{
   position:absolute;right:clamp(80px,9vw,180px);bottom:72px;
   font-weight:600;font-size:24px;color:var(--muted);font-variant-numeric:tabular-nums;
 }
+.logo{position:absolute;left:clamp(80px,9vw,180px);top:72px;height:44px;width:auto;opacity:.95}
+/* A product photo fills the frame; the text sits on a scrim so it stays readable over
+   whatever the photo happens to be. Investors read a physical product as evidence that
+   the software is attached to something real, which no screen recording can supply. */
+.photo{position:absolute;inset:0;z-index:0}
+.photo img{width:100%;height:100%;object-fit:cover;display:block}
+.photo::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,var(--bg) 0%,rgba(11,13,16,.88) 46%,rgba(11,13,16,.42) 100%);
+}
+/* The stage paints an opaque background, which would bury the photo behind it. */
+body.photo-card .stage{background:transparent;position:relative;z-index:1}
+body.photo-card .index{z-index:1}
+body.photo-card .logo{z-index:1}
+body.photo-card .sub{max-width:28ch}
 /* Lower third: transparent so ffmpeg can overlay it on live screen footage. */
 body.caption{background:transparent}
 .lower{
@@ -91,7 +106,7 @@ async function document(bodyClass, inner, theme) {
  * Full-frame card used for the opening title, section dividers and the closing slate.
  * `index` renders a small "03 / 06" marker so a reviewer can cite a moment in the cut.
  */
-export async function cardHtml({ eyebrow, headline, sub, index, theme }) {
+export async function cardHtml({ eyebrow, headline, sub, index, theme, logo, image }) {
   const parts = [
     eyebrow ? `<p class="eyebrow">${escapeHtml(eyebrow)}</p>` : '',
     `<h1 class="headline">${escapeHtml(headline)}</h1>`,
@@ -99,7 +114,14 @@ export async function cardHtml({ eyebrow, headline, sub, index, theme }) {
     '<div class="rule"></div>',
   ].join('');
   const marker = index ? `<div class="index">${escapeHtml(index)}</div>` : '';
-  return document('card', `<div class="stage">${parts}</div>${marker}`, theme);
+  // `logo` and `image` arrive already inlined as data URIs — see lib/assets.mjs.
+  const mark = logo ? `<img class="logo" src="${logo}" alt="">` : '';
+  const photo = image ? `<div class="photo"><img src="${image}" alt=""></div>` : '';
+  return document(
+    `card${image ? ' photo-card' : ''}`,
+    `${photo}${mark}<div class="stage">${parts}</div>${marker}`,
+    theme,
+  );
 }
 
 /** Transparent lower-third burned over the live screen recording. */

@@ -13,6 +13,7 @@ import { chromiumPath } from './lib/env.mjs';
 import { loadScenario } from './lib/scenario.mjs';
 import { redactInitScript } from './lib/redact.mjs';
 import { CURSOR_INIT_SCRIPT, glideTo, glideToSelector, ripple } from './lib/pointer.mjs';
+import { dataUri } from './lib/assets.mjs';
 
 const BOOLEAN_FLAGS = new Set(['check', 'refresh-auth']);
 
@@ -357,13 +358,25 @@ async function main() {
       .filter(Boolean),
   );
   const authStates = await ensureAuthState(browser, scenario, { refreshAuth, check, accountsInUse });
-  const manifest = { name: scenario.name, fps: scenario.fps, viewport: scenario.viewport, theme: scenario.theme, scenes: [] };
+  // Images are resolved and inlined here, not at produce time: the manifest travels on
+  // its own (a take can be re-cut later, or on another machine), and a path in it would
+  // point at a file that is no longer beside it.
+  const logo = scenario.brand.logo
+    ? await dataUri(resolve(scenario.dir, scenario.brand.logo))
+    : undefined;
+  const manifest = {
+    name: scenario.name, fps: scenario.fps, viewport: scenario.viewport,
+    theme: scenario.theme, ...(logo ? { logo } : {}), scenes: [],
+  };
   const failures = [];
   const optionalSkips = [];
 
   for (const scene of scenes) {
     if (scene.card) {
-      manifest.scenes.push({ id: scene.id, kind: 'card', card: scene.card, seconds: scene.seconds ?? 3.4 });
+      const card = scene.card.image
+        ? { ...scene.card, image: await dataUri(resolve(scenario.dir, scene.card.image)) }
+        : scene.card;
+      manifest.scenes.push({ id: scene.id, kind: 'card', card, seconds: scene.seconds ?? 3.4 });
       if (!check) console.log(`card   ${scene.id}`);
       continue;
     }

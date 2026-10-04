@@ -54,6 +54,7 @@ async function renderPngs(manifest, workDir) {
       ...scene.card,
       index: scene.card.index ?? `${String(i + 1).padStart(2, '0')} / ${String(cardScenes.length).padStart(2, '0')}`,
       theme: manifest.theme,
+      logo: manifest.logo,
     });
     await shoot(html, file, false);
     paths.cards[scene.id] = file;

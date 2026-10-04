@@ -103,6 +103,9 @@ export async function loadScenario(path) {
 
     if (scene.card) {
       if (!scene.card.headline) errors.push(`${where}.card.headline is required`);
+      if (scene.card.image !== undefined && typeof scene.card.image !== 'string') {
+        errors.push(`${where}.card.image must be a path relative to the scenario file`);
+      }
       if (scene.as) errors.push(`${where}.as is meaningless on a card — cards film no app`);
     } else if (!Array.isArray(scene.steps) || scene.steps.length === 0) {
       errors.push(`${where} needs either a \`card\` or a non-empty \`steps\` array`);
@@ -131,6 +134,10 @@ export async function loadScenario(path) {
     }
   }
 
+  if (raw.brand && typeof raw.brand.logo !== 'undefined' && typeof raw.brand.logo !== 'string') {
+    errors.push('`brand.logo` must be a path relative to the scenario file');
+  }
+
   if (errors.length) {
     throw new Error(`Invalid scenario ${path}:\n  - ${errors.join('\n  - ')}`);
   }
@@ -141,6 +148,7 @@ export async function loadScenario(path) {
     viewport: { width: 1920, height: 1080, ...(raw.viewport ?? {}) },
     fps: raw.fps ?? 30,
     theme: raw.theme ?? {},
+    brand: raw.brand ?? {},
     redact: raw.redact ?? [],
     dir: dirname(resolve(path)),
   };

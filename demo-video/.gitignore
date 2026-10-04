@@ -9,3 +9,9 @@ out/
 # public, so these stay on disk and go out through whatever channel the recipient is
 # actually meant to receive them on.
 outreach/
+
+# Brand marks and product photography. The repository is public and these are often
+# pre-launch material, so the files stay local; the README that says what to put here
+# is tracked, the images are not.
+assets/*
+!assets/README.md
