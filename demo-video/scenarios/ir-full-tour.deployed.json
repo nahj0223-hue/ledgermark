@@ -1001,12 +1001,12 @@
         {
           "do": "wait",
           "selector": [
-            "#module-dashboard",
-            "[data-module=\"dashboard\"]",
-            "nav button"
+            ".nav .seg .seg-opt",
+            "#module-dashboard"
           ],
           "timeoutMs": 25000,
-          "optional": true
+          "optional": true,
+          "probeMs": 20000
         },
         {
           "do": "caption",
@@ -1017,6 +1017,7 @@
         {
           "do": "highlight",
           "selector": [
+            ".nav .seg",
             "nav",
             "[role=\"tablist\"]"
           ],
@@ -1032,6 +1033,7 @@
         {
           "do": "highlight",
           "selector": [
+            "div:has(> .kpi)",
             "#kpi-grid",
             "[data-testid=\"kpis\"]"
           ],
@@ -1062,11 +1064,12 @@
         {
           "do": "wait",
           "selector": [
-            "#module-production",
-            "[data-module=\"production\"]",
-            "nav button:has-text(\"생산\")"
+            ".nav .seg-opt:has-text(\"Production\")",
+            ".nav .seg-opt:has-text(\"생산\")",
+            ".nav .seg .seg-opt:nth-child(7)"
           ],
-          "optional": true
+          "optional": true,
+          "probeMs": 20000
         }
       ],
       "steps": [
@@ -1079,9 +1082,9 @@
         {
           "do": "click",
           "selector": [
-            "#module-production",
-            "[data-module=\"production\"]",
-            "nav button:has-text(\"생산\")"
+            ".nav .seg-opt:has-text(\"Production\")",
+            ".nav .seg-opt:has-text(\"생산\")",
+            ".nav .seg .seg-opt:nth-child(7)"
           ],
           "ms": 1800,
           "optional": true
@@ -1089,8 +1092,9 @@
         {
           "do": "highlight",
           "selector": [
-            "#production-mint",
-            "section:has-text(\"발행\")"
+            ".blueprint:has-text(\"Mint\")",
+            ".blueprint",
+            "#production-mint"
           ],
           "ms": 3000,
           "optional": true
@@ -1110,8 +1114,9 @@
         {
           "do": "highlight",
           "selector": [
-            "#production-lots",
-            "table"
+            ".card:has(table.table)",
+            "table.table",
+            "#production-lots"
           ],
           "ms": 3000,
           "optional": true
@@ -1134,11 +1139,12 @@
         {
           "do": "wait",
           "selector": [
-            "#module-customs",
-            "[data-module=\"customs\"]",
-            "nav button:has-text(\"통관\")"
+            ".nav .seg-opt:has-text(\"Customs\")",
+            ".nav .seg-opt:has-text(\"통관\")",
+            ".nav .seg .seg-opt:nth-child(8)"
           ],
-          "optional": true
+          "optional": true,
+          "probeMs": 20000
         }
       ],
       "steps": [
@@ -1151,9 +1157,9 @@
         {
           "do": "click",
           "selector": [
-            "#module-customs",
-            "[data-module=\"customs\"]",
-            "nav button:has-text(\"통관\")"
+            ".nav .seg-opt:has-text(\"Customs\")",
+            ".nav .seg-opt:has-text(\"통관\")",
+            ".nav .seg .seg-opt:nth-child(8)"
           ],
           "ms": 1800,
           "optional": true
@@ -1161,8 +1167,9 @@
         {
           "do": "highlight",
           "selector": [
-            "#tariff-table",
-            "table"
+            ".card:has-text(\"Customs tariffs\")",
+            ".card:has(table.table)",
+            "#tariff-table"
           ],
           "ms": 3400,
           "optional": true
@@ -1197,11 +1204,12 @@
         {
           "do": "wait",
           "selector": [
-            "#module-exchanges",
-            "[data-module=\"exchanges\"]",
-            "nav button:has-text(\"교환\")"
+            ".nav .seg-opt:has-text(\"Exchanges\")",
+            ".nav .seg-opt:has-text(\"교환\")",
+            ".nav .seg .seg-opt:nth-child(4)"
           ],
-          "optional": true
+          "optional": true,
+          "probeMs": 20000
         }
       ],
       "steps": [
@@ -1214,9 +1222,9 @@
         {
           "do": "click",
           "selector": [
-            "#module-exchanges",
-            "[data-module=\"exchanges\"]",
-            "nav button:has-text(\"교환\")"
+            ".nav .seg-opt:has-text(\"Exchanges\")",
+            ".nav .seg-opt:has-text(\"교환\")",
+            ".nav .seg .seg-opt:nth-child(4)"
           ],
           "ms": 1800,
           "optional": true
@@ -1224,6 +1232,7 @@
         {
           "do": "highlight",
           "selector": [
+            "div:has(> .blueprint)",
             "#exchange-kpis",
             "[data-testid=\"kpis\"]"
           ],
@@ -1245,8 +1254,9 @@
         {
           "do": "highlight",
           "selector": [
-            "#exchange-settlement",
-            "table"
+            ".card:has-text(\"Monthly exchanges\")",
+            ".card:has(table.table)",
+            "#exchange-settlement"
           ],
           "ms": 3000,
           "optional": true
@@ -1269,11 +1279,12 @@
         {
           "do": "wait",
           "selector": [
-            "#module-ledger",
-            "[data-module=\"ledger\"]",
-            "nav button:has-text(\"원장\")"
+            ".nav .seg-opt:has-text(\"Ledger\")",
+            ".nav .seg-opt:has-text(\"원장\")",
+            ".nav .seg .seg-opt:nth-child(5)"
           ],
-          "optional": true
+          "optional": true,
+          "probeMs": 20000
         }
       ],
       "steps": [
@@ -1286,9 +1297,9 @@
         {
           "do": "click",
           "selector": [
-            "#module-ledger",
-            "[data-module=\"ledger\"]",
-            "nav button:has-text(\"원장\")"
+            ".nav .seg-opt:has-text(\"Ledger\")",
+            ".nav .seg-opt:has-text(\"원장\")",
+            ".nav .seg .seg-opt:nth-child(5)"
           ],
           "ms": 1800,
           "optional": true
@@ -1296,8 +1307,9 @@
         {
           "do": "highlight",
           "selector": [
-            "#ledger-integrity",
-            "section:has-text(\"무결성\")"
+            ".card:has-text(\"Hash-chain\")",
+            ".card:has(.card-kicker)",
+            "#ledger-integrity"
           ],
           "ms": 3000,
           "optional": true
@@ -1317,8 +1329,8 @@
         {
           "do": "highlight",
           "selector": [
-            "#anchor-panel",
-            "table"
+            "table.table",
+            "#anchor-panel"
           ],
           "ms": 3200,
           "optional": true
@@ -1347,11 +1359,12 @@
         {
           "do": "wait",
           "selector": [
-            "#module-audit",
-            "[data-module=\"audit\"]",
-            "nav button:has-text(\"감사\")"
+            ".nav .seg-opt:has-text(\"Audit log\")",
+            ".nav .seg-opt:has-text(\"감사\")",
+            ".nav .seg .seg-opt:nth-child(6)"
           ],
-          "optional": true
+          "optional": true,
+          "probeMs": 20000
         }
       ],
       "steps": [
@@ -1364,9 +1377,9 @@
         {
           "do": "click",
           "selector": [
-            "#module-audit",
-            "[data-module=\"audit\"]",
-            "nav button:has-text(\"감사\")"
+            ".nav .seg-opt:has-text(\"Audit log\")",
+            ".nav .seg-opt:has-text(\"감사\")",
+            ".nav .seg .seg-opt:nth-child(6)"
           ],
           "ms": 1800,
           "optional": true
@@ -1374,8 +1387,9 @@
         {
           "do": "highlight",
           "selector": [
-            "#audit-table",
-            "table"
+            "div:has(> .field):has-text(\"read-only\")",
+            "table.table tbody tr:first-child",
+            "#audit-table"
           ],
           "ms": 3400,
           "optional": true

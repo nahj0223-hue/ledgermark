@@ -96,7 +96,7 @@
         "headline": "기록은 통관에서 끊기고, 판매에서 다시 시작된다",
         "sub": "통관과 소매 사이에 원장이 없다. 세수 누락과 밀수는 전부 그 공백에서 발생한다."
       },
-      "seconds": 5.0
+      "seconds": 5
     },
     {
       "id": "05-title",
@@ -951,11 +951,11 @@
         {
           "do": "wait",
           "selector": [
-            "#module-dashboard",
-            "[data-module=\"dashboard\"]",
-            "nav button"
+            ".nav .seg .seg-opt",
+            "#module-dashboard"
           ],
-          "timeoutMs": 25000
+          "timeoutMs": 25000,
+          "probeMs": 20000
         },
         {
           "do": "caption",
@@ -966,6 +966,7 @@
         {
           "do": "highlight",
           "selector": [
+            ".nav .seg",
             "nav",
             "[role=\"tablist\"]"
           ],
@@ -981,6 +982,7 @@
         {
           "do": "highlight",
           "selector": [
+            "div:has(> .kpi)",
             "#kpi-grid",
             "[data-testid=\"kpis\"]"
           ],
@@ -1009,10 +1011,11 @@
         {
           "do": "wait",
           "selector": [
-            "#module-production",
-            "[data-module=\"production\"]",
-            "nav button:has-text(\"생산\")"
-          ]
+            ".nav .seg-opt:has-text(\"Production\")",
+            ".nav .seg-opt:has-text(\"생산\")",
+            ".nav .seg .seg-opt:nth-child(7)"
+          ],
+          "probeMs": 20000
         }
       ],
       "steps": [
@@ -1025,17 +1028,18 @@
         {
           "do": "click",
           "selector": [
-            "#module-production",
-            "[data-module=\"production\"]",
-            "nav button:has-text(\"생산\")"
+            ".nav .seg-opt:has-text(\"Production\")",
+            ".nav .seg-opt:has-text(\"생산\")",
+            ".nav .seg .seg-opt:nth-child(7)"
           ],
           "ms": 1800
         },
         {
           "do": "highlight",
           "selector": [
-            "#production-mint",
-            "section:has-text(\"발행\")"
+            ".blueprint:has-text(\"Mint\")",
+            ".blueprint",
+            "#production-mint"
           ],
           "ms": 3000,
           "optional": true
@@ -1054,8 +1058,9 @@
         {
           "do": "highlight",
           "selector": [
-            "#production-lots",
-            "table"
+            ".card:has(table.table)",
+            "table.table",
+            "#production-lots"
           ],
           "ms": 3000,
           "optional": true
@@ -1077,10 +1082,11 @@
         {
           "do": "wait",
           "selector": [
-            "#module-customs",
-            "[data-module=\"customs\"]",
-            "nav button:has-text(\"통관\")"
-          ]
+            ".nav .seg-opt:has-text(\"Customs\")",
+            ".nav .seg-opt:has-text(\"통관\")",
+            ".nav .seg .seg-opt:nth-child(8)"
+          ],
+          "probeMs": 20000
         }
       ],
       "steps": [
@@ -1093,17 +1099,18 @@
         {
           "do": "click",
           "selector": [
-            "#module-customs",
-            "[data-module=\"customs\"]",
-            "nav button:has-text(\"통관\")"
+            ".nav .seg-opt:has-text(\"Customs\")",
+            ".nav .seg-opt:has-text(\"통관\")",
+            ".nav .seg .seg-opt:nth-child(8)"
           ],
           "ms": 1800
         },
         {
           "do": "highlight",
           "selector": [
-            "#tariff-table",
-            "table"
+            ".card:has-text(\"Customs tariffs\")",
+            ".card:has(table.table)",
+            "#tariff-table"
           ],
           "ms": 3400,
           "optional": true
@@ -1136,10 +1143,11 @@
         {
           "do": "wait",
           "selector": [
-            "#module-exchanges",
-            "[data-module=\"exchanges\"]",
-            "nav button:has-text(\"교환\")"
-          ]
+            ".nav .seg-opt:has-text(\"Exchanges\")",
+            ".nav .seg-opt:has-text(\"교환\")",
+            ".nav .seg .seg-opt:nth-child(4)"
+          ],
+          "probeMs": 20000
         }
       ],
       "steps": [
@@ -1152,15 +1160,16 @@
         {
           "do": "click",
           "selector": [
-            "#module-exchanges",
-            "[data-module=\"exchanges\"]",
-            "nav button:has-text(\"교환\")"
+            ".nav .seg-opt:has-text(\"Exchanges\")",
+            ".nav .seg-opt:has-text(\"교환\")",
+            ".nav .seg .seg-opt:nth-child(4)"
           ],
           "ms": 1800
         },
         {
           "do": "highlight",
           "selector": [
+            "div:has(> .blueprint)",
             "#exchange-kpis",
             "[data-testid=\"kpis\"]"
           ],
@@ -1181,8 +1190,9 @@
         {
           "do": "highlight",
           "selector": [
-            "#exchange-settlement",
-            "table"
+            ".card:has-text(\"Monthly exchanges\")",
+            ".card:has(table.table)",
+            "#exchange-settlement"
           ],
           "ms": 3000,
           "optional": true
@@ -1204,10 +1214,11 @@
         {
           "do": "wait",
           "selector": [
-            "#module-ledger",
-            "[data-module=\"ledger\"]",
-            "nav button:has-text(\"원장\")"
-          ]
+            ".nav .seg-opt:has-text(\"Ledger\")",
+            ".nav .seg-opt:has-text(\"원장\")",
+            ".nav .seg .seg-opt:nth-child(5)"
+          ],
+          "probeMs": 20000
         }
       ],
       "steps": [
@@ -1220,17 +1231,18 @@
         {
           "do": "click",
           "selector": [
-            "#module-ledger",
-            "[data-module=\"ledger\"]",
-            "nav button:has-text(\"원장\")"
+            ".nav .seg-opt:has-text(\"Ledger\")",
+            ".nav .seg-opt:has-text(\"원장\")",
+            ".nav .seg .seg-opt:nth-child(5)"
           ],
           "ms": 1800
         },
         {
           "do": "highlight",
           "selector": [
-            "#ledger-integrity",
-            "section:has-text(\"무결성\")"
+            ".card:has-text(\"Hash-chain\")",
+            ".card:has(.card-kicker)",
+            "#ledger-integrity"
           ],
           "ms": 3000,
           "optional": true
@@ -1249,8 +1261,8 @@
         {
           "do": "highlight",
           "selector": [
-            "#anchor-panel",
-            "table"
+            "table.table",
+            "#anchor-panel"
           ],
           "ms": 3200,
           "optional": true
@@ -1278,10 +1290,11 @@
         {
           "do": "wait",
           "selector": [
-            "#module-audit",
-            "[data-module=\"audit\"]",
-            "nav button:has-text(\"감사\")"
-          ]
+            ".nav .seg-opt:has-text(\"Audit log\")",
+            ".nav .seg-opt:has-text(\"감사\")",
+            ".nav .seg .seg-opt:nth-child(6)"
+          ],
+          "probeMs": 20000
         }
       ],
       "steps": [
@@ -1294,17 +1307,18 @@
         {
           "do": "click",
           "selector": [
-            "#module-audit",
-            "[data-module=\"audit\"]",
-            "nav button:has-text(\"감사\")"
+            ".nav .seg-opt:has-text(\"Audit log\")",
+            ".nav .seg-opt:has-text(\"감사\")",
+            ".nav .seg .seg-opt:nth-child(6)"
           ],
           "ms": 1800
         },
         {
           "do": "highlight",
           "selector": [
-            "#audit-table",
-            "table"
+            "div:has(> .field):has-text(\"read-only\")",
+            "table.table tbody tr:first-child",
+            "#audit-table"
           ],
           "ms": 3400
         },
@@ -1379,7 +1393,7 @@
         "headline": "세수와 안전은 추적 가능성에서 나온다",
         "sub": "필리핀 RA 11900 체계를 전제로 설계 — 통관·소매·단속이 같은 기록을 공유하는 구조입니다."
       },
-      "seconds": 5.0
+      "seconds": 5
     }
   ]
 }
