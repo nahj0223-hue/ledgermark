@@ -1,0 +1,1461 @@
+{
+  "name": "ledgermark-ir-full-tour-deployed",
+  "baseUrl": "https://app-production-daca.up.railway.app",
+  "fps": 30,
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "auth": {
+    "statePath": ".auth/{account}.json",
+    "defaultAccount": "admin",
+    "accounts": {
+      "consumer": {
+        "email": "consumer@ledgermark.com",
+        "password": {
+          "env": "LM_DEMO_PASSWORD"
+        },
+        "home": "/app"
+      },
+      "store": {
+        "email": "store@ledgermark.com",
+        "password": {
+          "env": "LM_DEMO_PASSWORD"
+        },
+        "home": "/partner"
+      },
+      "distributor": {
+        "email": "distributor@ledgermark.com",
+        "password": {
+          "env": "LM_DEMO_PASSWORD"
+        },
+        "home": "/partner"
+      },
+      "field": {
+        "email": "officer@ledgermark.com",
+        "password": {
+          "env": "LM_DEMO_PASSWORD"
+        },
+        "home": "/field"
+      },
+      "inspector": {
+        "email": "inspector@ledgermark.com",
+        "password": {
+          "env": "LM_DEMO_PASSWORD"
+        },
+        "home": "/console"
+      },
+      "admin": {
+        "email": "admin@ledgermark.com",
+        "password": {
+          "env": "LM_DEMO_PASSWORD"
+        },
+        "home": "/console"
+      }
+    },
+    "steps": [
+      {
+        "do": "goto",
+        "url": "/login?next={home}&switch=1&email={email}"
+      },
+      {
+        "do": "wait",
+        "selector": [
+          "input[type=\"password\"]",
+          "#password",
+          "#lm-password"
+        ]
+      },
+      {
+        "do": "fill",
+        "selector": [
+          "input[type=\"password\"]",
+          "#password",
+          "#lm-password"
+        ],
+        "value": "{password}",
+        "typeDelayMs": 0
+      },
+      {
+        "do": "click",
+        "selector": [
+          "button[type=\"submit\"]",
+          "button:has-text(\"로그인\")",
+          "#lm-signin"
+        ],
+        "ms": 2500
+      }
+    ]
+  },
+  "redact": [],
+  "scenes": [
+    {
+      "id": "00-problem",
+      "card": {
+        "eyebrow": "문제 정의",
+        "headline": "기록은 통관에서 끊기고, 판매에서 다시 시작된다",
+        "sub": "통관과 소매 사이에 원장이 없다. 세수 누락과 밀수는 전부 그 공백에서 발생한다."
+      },
+      "seconds": 5
+    },
+    {
+      "id": "05-title",
+      "card": {
+        "eyebrow": "LedgerMark · 필리핀 전자담배 유통 추적",
+        "headline": "등록된 순간부터, 끝까지 추적되는 유통",
+        "sub": "추가만 가능한 해시 체인으로 그 공백을 메웁니다. 여섯 역할이 하나의 원장을 공유합니다."
+      },
+      "seconds": 4.6
+    },
+    {
+      "id": "08-chapter-consumer",
+      "card": {
+        "eyebrow": "1 / 4",
+        "headline": "소비자 — 등록된 제품인지 확인한다",
+        "sub": "제품 하단 UID 하나로 생산·통관·판매 이력이 전부 조회됩니다."
+      },
+      "seconds": 3.8
+    },
+    {
+      "id": "10-consumer-verify",
+      "as": "consumer",
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/app"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "input[name=\"uid\"]",
+            "#uid",
+            "input[placeholder*=\"PH-\"]",
+            "#uid-input"
+          ],
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "소비자 — 정품 확인",
+          "ms": 4000,
+          "sub": "제품 UID 를 입력하면 원장에서 직접 조회합니다"
+        },
+        {
+          "do": "fill",
+          "selector": [
+            "input[name=\"uid\"]",
+            "#uid",
+            "input[placeholder*=\"PH-\"]",
+            "#uid-input"
+          ],
+          "value": "PH-2026-DEMO-000001",
+          "typeDelayMs": 30,
+          "optional": true
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"조회\")",
+            "button[type=\"submit\"]",
+            "#uid-submit"
+          ],
+          "ms": 1400,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "원장 기록 6건, 체인 고정 완료",
+          "ms": 4200,
+          "sub": "정품 여부는 선언이 아니라 기록의 연속성으로 증명됩니다"
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#verdict",
+            "[data-testid=\"verdict\"]",
+            "section:has-text(\"정품\")"
+          ],
+          "ms": 2600,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 700,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "15-consumer-trace",
+      "as": "consumer",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/app"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "input[name=\"uid\"]",
+            "#uid",
+            "input[placeholder*=\"PH-\"]",
+            "#uid-input"
+          ],
+          "optional": true
+        },
+        {
+          "do": "fill",
+          "selector": [
+            "input[name=\"uid\"]",
+            "#uid",
+            "input[placeholder*=\"PH-\"]",
+            "#uid-input"
+          ],
+          "value": "PH-2026-DEMO-000001",
+          "optional": true
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"조회\")",
+            "button[type=\"submit\"]",
+            "#uid-submit"
+          ],
+          "ms": 1200,
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "1. 유통 이력 추적",
+          "ms": 4200,
+          "sub": "생산 → 수출 → 통관 → 소매 → 교환 → 재판매"
+        },
+        {
+          "do": "scroll",
+          "to": 520,
+          "ms": 1500,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#trace-timeline",
+            "[data-testid=\"trace\"]",
+            "section:has-text(\"유통 이력\")"
+          ],
+          "ms": 3200,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "각 단계가 직전 기록의 해시를 포함한다",
+          "ms": 4600,
+          "sub": "중간 한 건을 고치면 이후 전부가 깨지므로, 소급 수정이 불가능합니다"
+        },
+        {
+          "do": "scroll",
+          "to": 1080,
+          "ms": 1800,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 1200,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "20-consumer-consent",
+      "as": "consumer",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/app"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "input[name=\"uid\"]",
+            "#uid",
+            "input[placeholder*=\"PH-\"]",
+            "#uid-input"
+          ],
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "2. 동의와 보상",
+          "ms": 4200,
+          "sub": "동의·철회 자체가 원장에 기록되어 사후 증명이 가능합니다"
+        },
+        {
+          "do": "scroll",
+          "to": 1500,
+          "ms": 1600,
+          "optional": true
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"동의\")",
+            "#consent-accept"
+          ],
+          "ms": 1300,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#points-balance",
+            "[data-testid=\"points\"]",
+            "text=/\\d+\\s*P/"
+          ],
+          "ms": 2600,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "포인트 적립은 중복 방지 키로 1회만",
+          "ms": 4600,
+          "sub": "PointLedgerEntry.dedupeKey 유니크 제약 — 중복 적립이 DB 단계에서 차단됩니다"
+        },
+        {
+          "do": "settle",
+          "ms": 900,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "22-consumer-survey",
+      "as": "consumer",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/app"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#survey-panel",
+            "section:has-text(\"설문\")",
+            "body"
+          ],
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "3. 설문 — 동의한 소비자에게만 열린다",
+          "sub": "응답 내용이 아니라 '응답했다는 사실'이 원장에 남아 1인 1회가 보장됩니다",
+          "ms": 4600
+        },
+        {
+          "do": "scroll",
+          "to": 1980,
+          "ms": 1700,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#survey-panel",
+            "section:has-text(\"설문\")"
+          ],
+          "ms": 3200,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "참여 조건이 원장에서 나온다",
+          "sub": "'교환 이력 필요' 같은 조건을 설문 서버가 아니라 UID 이력이 판정합니다",
+          "ms": 4800
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"설문 시작\")",
+            "#survey-start"
+          ],
+          "ms": 1400,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 900,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "24-consumer-reward",
+      "as": "consumer",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/app"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#reward-panel",
+            "section:has-text(\"리워드\")",
+            "body"
+          ],
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "4. 리워드 — 포인트 차감과 발급이 한 트랜잭션",
+          "sub": "둘이 분리되면 차감만 되고 리워드가 안 나오는 구간이 생깁니다",
+          "ms": 4600
+        },
+        {
+          "do": "scroll",
+          "to": 2700,
+          "ms": 1800,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#reward-panel",
+            "section:has-text(\"리워드\")"
+          ],
+          "ms": 3200,
+          "optional": true
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"교환하기\")",
+            "#reward-redeem"
+          ],
+          "ms": 1500,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "적립도 차감도 중복이 불가능하다",
+          "sub": "PointLedgerEntry.dedupeKey 유니크 제약 — 재시도·중복 요청이 DB 단계에서 막힙니다",
+          "ms": 4800
+        },
+        {
+          "do": "settle",
+          "ms": 900,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "25-chapter-store",
+      "card": {
+        "eyebrow": "2 / 4",
+        "headline": "총판·가맹점 — 판매와 교환을 원장에 쓴다",
+        "sub": "연령확인을 통과하지 못하면 판매 자체가 기록되지 않습니다."
+      },
+      "seconds": 3.8
+    },
+    {
+      "id": "28-distributor",
+      "as": "distributor",
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/partner"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "main",
+            "body"
+          ],
+          "timeoutMs": 20000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "총판 — 통관된 물량을 소매로 내린다",
+          "sub": "같은 /partner 화면이지만 총판 권한에서는 하역과 교환 건수가 보입니다",
+          "ms": 4600
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "main",
+            "body"
+          ],
+          "ms": 2600,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "WHOLESALE → RETAIL_SOLD 사이가 비면 밀수다",
+          "sub": "총판 단계를 원장에 묶어야 현장 판정의 '통관 기록 없음'이 성립합니다",
+          "ms": 4600
+        },
+        {
+          "do": "settle",
+          "ms": 900,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "30-store-sale",
+      "as": "store",
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/partner"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "input[name=\"uid\"]",
+            "#sale-uid",
+            "input[placeholder*=\"UID\"]"
+          ],
+          "timeoutMs": 20000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "가맹점 — 판매 등록",
+          "ms": 4400,
+          "sub": "RA 11900 성인인증 → UID 상태 전이 → 원장 기록이 한 트랜잭션"
+        },
+        {
+          "do": "fill",
+          "selector": [
+            "input[name=\"uid\"]",
+            "#sale-uid",
+            "input[placeholder*=\"UID\"]"
+          ],
+          "value": "PH-2026-DEMO-000001",
+          "typeDelayMs": 30,
+          "optional": true
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"판매\")",
+            "button[type=\"submit\"]",
+            "#sale-submit"
+          ],
+          "ms": 1500,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#sale-result",
+            "[data-testid=\"sale-result\"]",
+            "text=RETAIL_SOLD"
+          ],
+          "ms": 2800,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "연령확인 실패 시 판매는 성립하지 않는다",
+          "ms": 4600,
+          "sub": "필리핀은 미등록 공급자 자체가 제재 대상 — 인증은 선택이 아니라 요건입니다"
+        },
+        {
+          "do": "settle",
+          "ms": 800,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "35-store-exchange",
+      "as": "store",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/partner"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#exchange-panel",
+            "section:has-text(\"교환\")",
+            "body"
+          ],
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "5. 불량 교환 — 예약과 수령의 2단계",
+          "ms": 4600,
+          "sub": "예약이 재고를 선점하고, 수령이 교환권을 소멸시킵니다"
+        },
+        {
+          "do": "scroll",
+          "to": 620,
+          "ms": 1500,
+          "optional": true
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"교환 예약\")",
+            "#exchange-reserve"
+          ],
+          "ms": 1500,
+          "optional": true
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"수령\")",
+            "#exchange-claim"
+          ],
+          "ms": 1500,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#exchange-voucher",
+            "[data-testid=\"voucher\"]",
+            "text=/V-\\d{4}-\\d/"
+          ],
+          "ms": 2800,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "동일 제품군 1회, 유효기간 3개월",
+          "ms": 4600,
+          "sub": "수령 시 voucherState 가 NONE 으로 내려가 재교환 경로가 사라집니다"
+        },
+        {
+          "do": "settle",
+          "ms": 900,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "40-kiosk",
+      "as": "store",
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/kiosk"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#kiosk-screen",
+            "main",
+            "body"
+          ],
+          "timeoutMs": 20000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "6. 무인 판매기도 같은 원장",
+          "ms": 4600,
+          "sub": "유인·무인 경로가 갈라지면 추적이 끊깁니다 — KioskSale 도 동일 원장에 씁니다"
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#kiosk-screen",
+            "main"
+          ],
+          "ms": 2800,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 1000,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "42-kiosk-consumer",
+      "signedOut": true,
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/kiosk"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#kiosk-products",
+            "section:has-text(\"제품\")",
+            "main"
+          ],
+          "timeoutMs": 20000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "키오스크 — 로그인 없이 구매한다",
+          "sub": "이 장면만 로그아웃 상태로 촬영했습니다. 소비자는 계정이 없습니다",
+          "ms": 4800
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"선택\")",
+            "#kiosk-pick"
+          ],
+          "ms": 700,
+          "optional": true
+        },
+        {
+          "do": "scroll",
+          "to": 420,
+          "ms": 1000,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#kiosk-age",
+            "section:has-text(\"연령확인\")"
+          ],
+          "ms": 2400,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "연령확인을 통과해야 결제 단계가 열린다",
+          "sub": "RA 11900 · 신분증 이미지는 저장하지 않고 판정 결과만 원장에 남깁니다",
+          "ms": 4800
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"결제\")",
+            "#kiosk-buy"
+          ],
+          "ms": 900,
+          "optional": true
+        },
+        {
+          "do": "scroll",
+          "to": 900,
+          "ms": 1000,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#kiosk-receipt",
+            "section:has-text(\"거래\")",
+            "table"
+          ],
+          "ms": 2800,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "구매자는 익명인데 제품은 추적된다",
+          "sub": "추적 대상은 사람이 아니라 UID 입니다 — 개인정보 수집 없이 유통 추적이 성립합니다",
+          "ms": 5200
+        },
+        {
+          "do": "settle",
+          "ms": 800,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "45-chapter-enforce",
+      "card": {
+        "eyebrow": "3 / 4",
+        "headline": "현장 단속과 관세청 — 같은 기록을 각자 본다",
+        "sub": "단속 요원은 판정을, 관세청은 세액을. 권한은 다르고 원장은 하나입니다."
+      },
+      "seconds": 4.2
+    },
+    {
+      "id": "50-field-verify",
+      "as": "field",
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/field"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "input[name=\"uid\"]",
+            "#field-uid",
+            "input[placeholder*=\"UID\"]"
+          ],
+          "timeoutMs": 20000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "현장 단속 — 즉시 판정",
+          "ms": 4400,
+          "sub": "현장에서 UID 를 조회하면 통관 여부와 정·위품 판정이 함께 반환됩니다"
+        },
+        {
+          "do": "fill",
+          "selector": [
+            "input[name=\"uid\"]",
+            "#field-uid",
+            "input[placeholder*=\"UID\"]"
+          ],
+          "value": "PH-2026-DEMO-000001",
+          "typeDelayMs": 30,
+          "optional": true
+        },
+        {
+          "do": "click",
+          "selector": [
+            "button:has-text(\"판정\")",
+            "button[type=\"submit\"]",
+            "#field-check"
+          ],
+          "ms": 900,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#field-verdict",
+            "[data-testid=\"verdict\"]",
+            "text=VERIFIED"
+          ],
+          "ms": 2200,
+          "optional": true
+        },
+        {
+          "do": "scroll",
+          "to": 480,
+          "ms": 1400,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "판정은 3종으로 갈린다",
+          "ms": 5000,
+          "sub": "VERIFIED · SEIZURE_GROUNDS(통관 기록 없음) · COUNTERFEIT_SUSPECTED(원장에 없는 UID)"
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#field-verdicts",
+            "table"
+          ],
+          "ms": 2600,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 600,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "55-field-alert",
+      "as": "field",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/field"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#alert-panel",
+            "section:has-text(\"경보\")",
+            "body"
+          ],
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "7. 미통관 UID 는 경보가 된다",
+          "ms": 4800,
+          "sub": "통관 기록 없이 소매 단계에서 관측되면 SmuggleAlert 가 자동 생성됩니다"
+        },
+        {
+          "do": "scroll",
+          "to": 1180,
+          "ms": 1700,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#alert-panel",
+            "section:has-text(\"경보\")"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 1000,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "60-customs",
+      "as": "inspector",
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/console"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#customs-batches",
+            "table",
+            "main"
+          ],
+          "timeoutMs": 20000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "관세청 — 조회 전용 정부 포털",
+          "ms": 4600,
+          "sub": "같은 /console 주소인데 권한이 다르면 다른 제품이 됩니다. 쓰기 권한은 없습니다"
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#customs-batches",
+            "table"
+          ],
+          "ms": 3200,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "8. 세율은 통관 시점으로 고정된다",
+          "ms": 5000,
+          "sub": "clearedAt 이전 최신 세율표를 적용 — 사후 세율 변경이 과거 배치를 흔들지 않습니다"
+        },
+        {
+          "do": "scroll",
+          "to": 720,
+          "ms": 1600,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#customs-tax",
+            "section:has-text(\"세액\")"
+          ],
+          "ms": 2800,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 900,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "65-chapter-admin",
+      "card": {
+        "eyebrow": "4 / 4",
+        "headline": "통합 관리 — 원장의 무결성을 증명한다",
+        "sub": "9개 모듈, 27종 감사 행위, 그리고 퍼블릭 체인 고정."
+      },
+      "seconds": 4.2
+    },
+    {
+      "id": "70-console-dashboard",
+      "as": "admin",
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/console"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#module-dashboard",
+            "[data-module=\"dashboard\"]",
+            "nav button"
+          ],
+          "timeoutMs": 25000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "통합 콘솔 — 9개 모듈",
+          "ms": 5200,
+          "sub": "대시보드 · UID 조회 · 밀수 경보 · 교환 원장 · 원장 상태 · 감사 로그 · 생산 · 통관 · 계정"
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "nav",
+            "[role=\"tablist\"]"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "9. 6단계 상태가 하나의 깔때기로 보인다",
+          "ms": 4800,
+          "sub": "MINTED → EXPORTED → WHOLESALE → RETAIL_SOLD → EXCHANGED → RESOLD"
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#kpi-grid",
+            "[data-testid=\"kpis\"]"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "scroll",
+          "to": 560,
+          "ms": 1600,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 1100,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "72-console-production",
+      "as": "admin",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/console"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#module-production",
+            "[data-module=\"production\"]",
+            "nav button:has-text(\"생산\")"
+          ],
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "10. 생산 — 원장의 1번 기록이 여기서 생긴다",
+          "sub": "Lot 을 발행하면 수량만큼의 UID 와 원장 기록이 같은 트랜잭션에서 만들어집니다",
+          "ms": 4600
+        },
+        {
+          "do": "click",
+          "selector": [
+            "#module-production",
+            "[data-module=\"production\"]",
+            "nav button:has-text(\"생산\")"
+          ],
+          "ms": 1800,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#production-mint",
+            "section:has-text(\"발행\")"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "부분 성공이 없다는 것이 핵심",
+          "sub": "2,400개 중 2,399개만 발행되는 상태가 존재하면 추적 근거가 그 자리에서 무너집니다",
+          "ms": 5000
+        },
+        {
+          "do": "scroll",
+          "to": 400,
+          "ms": 1500,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#production-lots",
+            "table"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 900,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "73-console-customs-admin",
+      "as": "admin",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/console"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#module-customs",
+            "[data-module=\"customs\"]",
+            "nav button:has-text(\"통관\")"
+          ],
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "11. 통관 관리 — 세율은 덮어쓰지 않고 쌓인다",
+          "sub": "적용 시작일과 함께 누적되며, 배치는 통관 시점에 유효했던 세율로 고정됩니다",
+          "ms": 4600
+        },
+        {
+          "do": "click",
+          "selector": [
+            "#module-customs",
+            "[data-module=\"customs\"]",
+            "nav button:has-text(\"통관\")"
+          ],
+          "ms": 1800,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#tariff-table",
+            "table"
+          ],
+          "ms": 3400,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "7월 세율을 지금 넣어도 3월 배치는 안 흔들린다",
+          "sub": "과거 납부 세액이 소급 변동하지 않는 구조 — 관세청이 대조할 수 있는 전제입니다",
+          "ms": 5000
+        },
+        {
+          "do": "scroll",
+          "to": 360,
+          "ms": 1500,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 1000,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "74-console-exchanges",
+      "as": "admin",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/console"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#module-exchanges",
+            "[data-module=\"exchanges\"]",
+            "nav button:has-text(\"교환\")"
+          ],
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "12. 교환 정산 — 예약은 재고를, 수령은 비용을 묶는다",
+          "sub": "가맹점의 교환 예약이 본사 재고를 선점하고, 수령 시점에 정산이 확정됩니다",
+          "ms": 4600
+        },
+        {
+          "do": "click",
+          "selector": [
+            "#module-exchanges",
+            "[data-module=\"exchanges\"]",
+            "nav button:has-text(\"교환\")"
+          ],
+          "ms": 1800,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#exchange-kpis",
+            "[data-testid=\"kpis\"]"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "재교환 시도 0건은 운영 성과가 아니라 구조다",
+          "sub": "수령 시 voucherState 가 NONE 이 되므로 두 번째 교환은 정산에 올라올 수 없습니다",
+          "ms": 5000
+        },
+        {
+          "do": "scroll",
+          "to": 420,
+          "ms": 1500,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#exchange-settlement",
+            "table"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 900,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "75-console-ledger",
+      "as": "admin",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/console"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#module-ledger",
+            "[data-module=\"ledger\"]",
+            "nav button:has-text(\"원장\")"
+          ],
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "13. 원장 무결성 검증",
+          "ms": 4400,
+          "sub": "전체 기록을 재해시하여 체인 연속성을 전수 확인합니다"
+        },
+        {
+          "do": "click",
+          "selector": [
+            "#module-ledger",
+            "[data-module=\"ledger\"]",
+            "nav button:has-text(\"원장\")"
+          ],
+          "ms": 1800,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#ledger-integrity",
+            "section:has-text(\"무결성\")"
+          ],
+          "ms": 3000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "14. 머클 루트를 퍼블릭 체인에 고정",
+          "ms": 4800,
+          "sub": "고정 이후에는 운영자도 과거 기록을 바꿀 수 없습니다"
+        },
+        {
+          "do": "scroll",
+          "to": 420,
+          "ms": 1500,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#anchor-panel",
+            "table"
+          ],
+          "ms": 3200,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "현재 데모 환경은 simulated 모드",
+          "ms": 5000,
+          "sub": "실제 체인 게시는 운영 전환 시 활성화됩니다 — 이 화면은 그 상태를 그대로 표시합니다"
+        },
+        {
+          "do": "settle",
+          "ms": 900,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "80-console-audit",
+      "as": "admin",
+      "setup": [
+        {
+          "do": "goto",
+          "url": "/console"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "#module-audit",
+            "[data-module=\"audit\"]",
+            "nav button:has-text(\"감사\")"
+          ],
+          "optional": true
+        }
+      ],
+      "steps": [
+        {
+          "do": "caption",
+          "text": "15. 감사 로그 — 27종 행위",
+          "ms": 4600,
+          "sub": "행위자·대상·시각이 함께 보존되며 삭제 경로는 없습니다"
+        },
+        {
+          "do": "click",
+          "selector": [
+            "#module-audit",
+            "[data-module=\"audit\"]",
+            "nav button:has-text(\"감사\")"
+          ],
+          "ms": 1800,
+          "optional": true
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "#audit-table",
+            "table"
+          ],
+          "ms": 3400,
+          "optional": true
+        },
+        {
+          "do": "scroll",
+          "to": 320,
+          "ms": 1400,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "규제 대응은 보고서가 아니라 조회로 끝난다",
+          "ms": 4800,
+          "sub": "제출용 자료를 따로 만들지 않아도 감사 추적이 상시 성립합니다"
+        },
+        {
+          "do": "settle",
+          "ms": 1000,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "85-download",
+      "as": "admin",
+      "steps": [
+        {
+          "do": "goto",
+          "url": "/download"
+        },
+        {
+          "do": "wait",
+          "selector": [
+            "button:has-text(\"APK\")",
+            "#download-apk",
+            "main"
+          ],
+          "timeoutMs": 20000,
+          "optional": true
+        },
+        {
+          "do": "caption",
+          "text": "16. 현장 앱은 이미 배포 가능",
+          "ms": 4600,
+          "sub": "단속 요원용 Android 앱이 서버와 동일한 원장 API 를 사용합니다"
+        },
+        {
+          "do": "highlight",
+          "selector": [
+            "button:has-text(\"APK\")",
+            "#download-apk"
+          ],
+          "ms": 2600,
+          "optional": true
+        },
+        {
+          "do": "settle",
+          "ms": 900,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "90-architecture",
+      "card": {
+        "eyebrow": "구조 요약",
+        "headline": "하나의 원장, 다섯 개의 권한, 두 개의 증명",
+        "sub": "추가만 가능한 해시 체인(내부 무결성) + 머클 루트 체인 고정(외부 증명). 역할별 화면은 같은 기록의 다른 단면입니다."
+      },
+      "seconds": 5.4
+    },
+    {
+      "id": "99-closing",
+      "card": {
+        "eyebrow": "LedgerMark",
+        "headline": "세수와 안전은 추적 가능성에서 나온다",
+        "sub": "필리핀 RA 11900 체계를 전제로 설계 — 통관·소매·단속이 같은 기록을 공유하는 구조입니다."
+      },
+      "seconds": 5
+    }
+  ]
+}

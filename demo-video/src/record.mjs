@@ -223,6 +223,24 @@ async function dispatchStep(page, step, scene, sceneStartedAt) {
 const hurry = (step, check) => (check ? { ...step, ms: step.do === 'wait' ? step.ms : 0, typeDelayMs: 0 } : step);
 
 /**
+ * A sign-in that silently fails looks exactly like one that worked until the footage comes
+ * back as twenty takes of the login form. Prove it instead: once the page has settled we
+ * must hold at least one cookie and have left the page the sign-in steps started on.
+ */
+async function assertSignedIn(page, context, steps, vars, baseUrl) {
+  await page.waitForLoadState('networkidle').catch(() => {});
+  const first = steps.find((step) => step.do === 'goto');
+  const loginPath = first ? new URL(withVars(first.url, vars), baseUrl).pathname : null;
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    const left = !loginPath || new URL(page.url()).pathname !== loginPath;
+    if (left && (await context.cookies()).length) return;
+    await page.waitForTimeout(250);
+  }
+  throw new Error(`still on ${new URL(page.url()).pathname} with ${(await context.cookies()).length} cookie(s) — sign-in did not take`);
+}
+
+/**
  * Sign in once per account and reuse the cookies. Repeating a login inside each scene's
  * `setup` works, but it re-types credentials on every take and puts the password on screen
  * in footage that is only trimmed afterwards.
@@ -292,9 +310,13 @@ async function ensureAuthState(browser, scenario, { refreshAuth, check, accounts
     context.setDefaultTimeout(check ? 5_000 : 30_000);
     const page = await context.newPage();
     try {
+      // Never hurried, even under --check: cutting the post-submit wait saves the session
+      // before the sign-in response lands, and the empty cookie jar is then reused by every
+      // scene — each one filming the login page while the log said "signed in".
       for (const step of scenario.auth.steps) {
-        await runStep(page, hurry(withVars(step, vars), check), { baseUrl: scenario.baseUrl }, Date.now(), { check });
+        await runStep(page, withVars(step, vars), { baseUrl: scenario.baseUrl }, Date.now(), { check });
       }
+      await assertSignedIn(page, context, scenario.auth.steps, vars, scenario.baseUrl);
     } catch (error) {
       await context.close();
       throw new Error(`Sign-in failed for ${label}: ${error.message}`);
